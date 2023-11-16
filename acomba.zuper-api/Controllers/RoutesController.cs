@@ -1,10 +1,12 @@
-﻿using acomba.zuper_api.Dto;
+﻿using acomba.zuper_api.Authentication;
+using acomba.zuper_api.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace acomba.zuper_api.Controllers
 {
+    [ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class RoutesController : ControllerBase
@@ -29,7 +31,7 @@ namespace acomba.zuper_api.Controllers
                     HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}routes");
                     HttpResponseMessage response = await http.SendAsync(request);
                     var responseBody = response.Content.ReadAsStringAsync().Result;
-                    var result = JsonConvert.DeserializeObject<JobsResponse>(responseBody);
+                    var result = JsonConvert.DeserializeObject<RoutesResponse>(responseBody);
 
                     return Ok(result);
                 }

@@ -1,10 +1,12 @@
-﻿using acomba.zuper_api.Dto;
+﻿using acomba.zuper_api.Authentication;
+using acomba.zuper_api.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace acomba.zuper_api.Controllers
 {
+    [ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class JobsController : ControllerBase
