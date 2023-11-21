@@ -64,13 +64,44 @@ namespace acomba.zuper_api.Controllers
                 dbService.Customers.Add(cus);
                 await dbService.SaveChangesAsync();
 
-                //save data to acomba 
+                //save customer data in acomba 
                var result = await customerService.AddCustomer(_cus);
                 return Ok(result);
             }
             catch(Exception ex)
             {
                 return BadRequest(ex.Message);
+            }
+            
+        }
+        [HttpPut("update-customer")]
+        public async Task<IActionResult> UpdateCustomer(CustomerRequest _cus)
+        {
+            try
+            {
+                var update = dbService.Customers.Where(i => i.CustomerId == _cus.customer).FirstOrDefault();
+                if (update != null)
+                {
+                    update.CustomerEmail = _cus.customer_email;
+                    update.CustomerFirstName = _cus.customer_first_name;
+                    update.CustomerLastName = _cus.customer_last_name;
+                    update.CompanyUid = _cus.company_uid;
+
+                    dbService.Customers.Update(update);
+                    await dbService.SaveChangesAsync();
+
+                    //update customer in acomba
+                    var result = await customerService.UpdateCustomer(_cus);
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest("No Customer found!");
+                }
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message); 
             }
             
         }

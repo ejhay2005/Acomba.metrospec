@@ -3,19 +3,21 @@
     public interface IAcombaConnection
     {
         void OpenConnection();
+        void CloseConnection();
     }
     public class AcombaConnection :IAcombaConnection
     {
         private readonly IConfiguration _configuration;
+        private AcoSDK.AcoSDKX AcoSDKInt = new AcoSDK.AcoSDKX();
+        private AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
+        private AcoSDK.User UserInt = new AcoSDK.User();
         public AcombaConnection(IConfiguration configuration)
         {
             _configuration = configuration;
         }
         public void OpenConnection()
         {
-            AcoSDK.AcoSDKX AcoSDKInt = new AcoSDK.AcoSDKX();
-            AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
-            AcoSDK.User UserInt = new AcoSDK.User();
+           
 
             int Version;
             string CompanyPath;
@@ -95,6 +97,19 @@
             {
                 
                 Console.WriteLine("Erreur: " + Acomba.GetErrorMessage(Error));
+            }
+        }
+        public void CloseConnection()
+        {
+            int Error;
+            Error = Acomba.CloseCompany();
+            if(Error == 0)
+            {
+                Console.WriteLine("Company closure successfully completed");
+            }
+            else
+            {
+                Console.WriteLine("Error:" + Acomba.GetErrorMessage(Error));
             }
         }
     }
