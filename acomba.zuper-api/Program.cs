@@ -1,5 +1,8 @@
+using acomba.zuper_api.AcombaServices;
 using acomba.zuper_api.Authentication;
 using acomba.zuper_api.Controllers;
+using acomba.zuper_api.Models;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 
@@ -10,8 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSingleton<CustomerController>();
+builder.Services.AddDbContext<DbService>();    
 builder.Services.AddScoped<ApiKeyAuthFilter>();
+builder.Services.AddScoped<ICustomerService,CustomerService>();
+builder.Services.AddScoped<IAcombaConnection, AcombaConnection>();
 builder.Services.AddSwaggerGen( c =>
 {
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme

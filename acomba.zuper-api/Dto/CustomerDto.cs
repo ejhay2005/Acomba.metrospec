@@ -55,6 +55,7 @@ namespace acomba.zuper_api.Dto
     {
         public string? mobile { get; set; }
         public string? work { get; set; }
+        public string? phone { get; set; }
         public string? _id { get; set; }
     }
 
@@ -119,4 +120,16 @@ namespace acomba.zuper_api.Dto
         public string? id { get; set; }
     }
 
+    public class SlaDurationDetails
+    {
+        public int? days { get; set; }
+        public int? hours { get; set; }
+        public int? minutes { get; set; }
+    }
+    public class CustomerAccountDetails
+    {
+        public string? billing_frequency { get; set; }
+        public string? payment_term { get; set; }
+        public string? tax_group { get; set; }
+    }
 }
