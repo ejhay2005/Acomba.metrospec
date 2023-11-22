@@ -13,6 +13,7 @@ namespace acomba.zuper_api.Controllers
     {
         private readonly IConfiguration configuration;
         static string ZuperUrl;
+        static List<InvoiceRequest> _invoiceList = new List<InvoiceRequest>();
         public InvoiceController(IConfiguration configuration)
         {
             this.configuration = configuration;
@@ -40,6 +41,26 @@ namespace acomba.zuper_api.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+        [HttpPost("add-invoice")]
+        public async Task<IActionResult> AddInvoice(InvoiceRequest invoiceRequest)
+        {
+            try
+            {
+                _invoiceList.Add(invoiceRequest);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+           
+        }
+        [HttpGet("get-added-invoice")]
+        public async Task<IActionResult> GetAddedInvoice()
+        {
+            
+            return Ok(_invoiceList);
         }
     }
 }
