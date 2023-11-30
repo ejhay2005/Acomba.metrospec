@@ -17,6 +17,7 @@ builder.Services.AddDbContext<DbService>();
 builder.Services.AddScoped<ApiKeyAuthFilter>();
 builder.Services.AddScoped<ICustomerService,CustomerService>();
 builder.Services.AddScoped<IinvoiceService,InvoiceService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAcombaConnection, AcombaConnection>();
 builder.Services.AddSwaggerGen( c =>
 {
