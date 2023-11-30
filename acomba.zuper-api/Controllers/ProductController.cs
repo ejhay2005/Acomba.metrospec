@@ -1,4 +1,5 @@
-﻿using acomba.zuper_api.Authentication;
+﻿using acomba.zuper_api.AcombaServices;
+using acomba.zuper_api.Authentication;
 using acomba.zuper_api.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,12 @@ namespace acomba.zuper_api.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IConfiguration configuration;
+        private readonly IProductService _productService;
         static string ZuperUrl;
-        public ProductController(IConfiguration configuration)
+        public ProductController(IConfiguration configuration, IProductService productService)
         {
             this.configuration = configuration;
+            _productService = productService;
             if (string.IsNullOrEmpty(ZuperUrl)) ZuperUrl = configuration["ZuperUrl"];
 
         }
@@ -35,6 +38,48 @@ namespace acomba.zuper_api.Controllers
 
                     return Ok(result);
                 }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPost("add-product")]
+        public async Task<IActionResult> AddProduct(ProductDto product)
+        {
+            try
+            {
+               
+                var result = await _productService.AddProduct(product);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPost("update-product")]
+        public async Task<IActionResult> UpdateProduct(ProductDto product)
+        {
+            try
+            {
+
+                var result = await _productService.UpdateProduct(product);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPost("get-acomba-product")]
+        public async Task<IActionResult> GetAcombaProduct(string productId)
+        {
+            try
+            {
+
+                var result = await _productService.GetProduct(productId);
+                return Ok(result);
             }
             catch (Exception ex)
             {

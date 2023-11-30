@@ -35,7 +35,7 @@
 
     public class LineItemDetails
     {
-        public int? product_id { get; set; }
+        public string? product_id { get; set; }
         public string? product_uid { get; set; }
         public string? name { get; set; }
         public string? image { get; set; }

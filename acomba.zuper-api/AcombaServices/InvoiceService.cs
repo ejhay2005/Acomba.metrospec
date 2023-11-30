@@ -90,7 +90,7 @@ namespace acomba.zuper_api.AcombaServices
                             _transactionInt.ILDescription[1] = "Estimate estate";
                             _transactionInt.ILSellingPrice[1] = 44.21;
                             _transactionInt.ILProductGroupCP[1] = GetProductGroupCardPos(1);
-                            _transactionInt.ILInvoicedQty[2] = 1;
+                            _transactionInt.ILInvoicedQty[1] = 1;
                         }
 
                         error = _transactionInt.AddCard();
