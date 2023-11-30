@@ -1,4 +1,5 @@
-﻿using acomba.zuper_api.Authentication;
+﻿using acomba.zuper_api.AcombaServices;
+using acomba.zuper_api.Authentication;
 using acomba.zuper_api.Dto;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +13,13 @@ namespace acomba.zuper_api.Controllers
     public class InvoiceController : ControllerBase
     {
         private readonly IConfiguration configuration;
+        private readonly IinvoiceService _invoiceService;
         static string ZuperUrl;
-        public InvoiceController(IConfiguration configuration)
+        static List<InvoiceRequest> _invoiceList = new List<InvoiceRequest>();
+        public InvoiceController(IConfiguration configuration,IinvoiceService invoiceService)
         {
             this.configuration = configuration;
+            _invoiceService = invoiceService;
             if (string.IsNullOrEmpty(ZuperUrl)) ZuperUrl = configuration["ZuperUrl"];
 
         }
@@ -40,6 +44,27 @@ namespace acomba.zuper_api.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+        [HttpPost("add-invoice")]
+        public async Task<IActionResult> AddInvoice(InvoiceRequest invoiceRequest)
+        {
+            try
+            {
+                _invoiceList.Add(invoiceRequest);
+                var result = await _invoiceService.AddInvoice(invoiceRequest);
+                return Ok(result);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+           
+        }
+        [HttpGet("get-added-invoice")]
+        public async Task<IActionResult> GetAddedInvoice()
+        {
+            
+            return Ok(_invoiceList);
         }
     }
 }
