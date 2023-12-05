@@ -10,6 +10,7 @@ namespace acomba.zuper_api.AcombaServices
         Task<string> AddProduct(ProductDto product);
         Task<string> UpdateProduct(ProductDto product);
         Task<object> GetProduct(string _productId);
+        Task<List<string>> ImportProducts(List<ProductDto> products);
     }
     public class ProductService : IProductService
     {
@@ -237,7 +238,64 @@ namespace acomba.zuper_api.AcombaServices
             {
                 return ex.Message;
             }
-        }   
+        }
+        #endregion
+        #region Import Product From Zuper to Acomba
+        public async Task<List<string>> ImportProducts(List<ProductDto> products)
+        {
+            try
+            {
+                
+                //Open connection
+                _connection.OpenConnection();
+
+                int error;
+                var results = new List<string>();
+                foreach (var p in products)
+                {
+                    //initialize property
+                    productInt.BlankKey();
+                    productInt.BlankCard();
+
+                    //set primarykey
+                    productInt.PKey_PrNumber = p.product_id;
+                    error = productInt.ReserveCardNumber();
+                    if (error == 0)
+                    {
+                        var _insert = InsertProduct(p.product_id, p.meta_data[1].value, p.product_name, p.quantity.Value, p.price.Value, p.meta_data[2].value);
+                        if (_insert == 0)
+                        {
+                            string res = "Product: " + p.product_id + " successfully added.";
+                            results.Add(res);
+                        }
+                        else
+                        {
+                            string res = "Failed to insert Product: " + p.product_id + "Error : " + Acomba.GetErrorMessage(_insert);
+                            results.Add(res);
+                            error = productInt.FreeCardNumber();
+                        }
+                    }
+                    else
+                    {
+                        string res = "Error :" + Acomba.GetErrorMessage(error);
+                        results.Add(res);
+                    }
+
+                }
+                _connection.CloseConnection();
+                return results;
+            }
+            catch (Exception ex)
+            {
+                _connection.CloseConnection();
+                throw;
+            }
+
+
+
+
+
+        }
         #endregion
     }
 }

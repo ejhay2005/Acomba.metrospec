@@ -31,7 +31,7 @@ namespace acomba.zuper_api.AcombaServices
                 CustomerInt.BlankKey();
 
                 //set customer primary key
-                CustomerInt.PKey_CuNumber = customerRequest.customer;
+                CustomerInt.PKey_CuNumber = customerRequest.customer_contact_no.phone;
 
                 //reserve primary key to add
                 error = CustomerInt.ReserveCardNumber();
@@ -39,7 +39,7 @@ namespace acomba.zuper_api.AcombaServices
                 if (error == 0)
                 {
                     CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
-                    CustomerInt.CuSortKey = customerRequest.customer_last_name.Substring(0, 1);
+                    CustomerInt.CuSortKey = customerRequest.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
                     CustomerInt.CuName = customerRequest.customer_first_name + " " + customerRequest.customer_last_name;
                     //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
                    // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
@@ -89,7 +89,7 @@ namespace acomba.zuper_api.AcombaServices
                 AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
 
                 CustomerInt.BlankKey();
-                CustomerInt.PKey_CuNumber = customerRequest.customer;
+                CustomerInt.PKey_CuNumber = customerRequest.customer_contact_no.phone;
 
                 error = CustomerInt.FindKey(noIndex, false);
                 if(error == 0)
