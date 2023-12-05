@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace acomba.zuper_api.Controllers
 {
-    [ServiceFilter(typeof(ApiKeyAuthFilter))]
+    //[ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
@@ -34,7 +34,7 @@ namespace acomba.zuper_api.Controllers
                     HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}product");
                     HttpResponseMessage response = await http.SendAsync(request);
                     var responseBody = response.Content.ReadAsStringAsync().Result;
-                    var result = JsonConvert.DeserializeObject<ProductResponse>(responseBody);
+                    var result = JsonConvert.DeserializeObject<Products>(responseBody);
 
                     return Ok(result);
                 }

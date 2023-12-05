@@ -16,7 +16,7 @@
         public CustomerAddress? customer_service_address { get; set; }
         public string? job { get; set; }
         public string? prefix { get; set; }
-        public int? reference_no { get; set; }
+        public string? reference_no { get; set; }
         public string? due_date { get; set; }
         public string? invoice_date { get; set; }
         public string? payment_term { get; set; }
