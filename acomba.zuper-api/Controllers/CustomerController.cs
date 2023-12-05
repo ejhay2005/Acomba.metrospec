@@ -111,6 +111,30 @@ namespace acomba.zuper_api.Controllers
             var getCustomers = dbService.Customers.ToList();
             return Ok(getCustomers);
         }
+        [HttpGet("import-customers")]
+        public async Task<IActionResult> ImportCustomers()
+        {
+            try
+            {
+                using (var http = new HttpClient())
+                {
+                    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}customers");
+                    HttpResponseMessage response = await http.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    var result = JsonConvert.DeserializeObject<CustomerResponse>(responseBody);
+
+                    var _import = customerService.ImportCustomers(result.data);
+                   
+                    return Ok(_import);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpGet("test-sdk")]
         public async Task<IActionResult> TestSdk()
         {

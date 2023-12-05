@@ -8,6 +8,7 @@ namespace acomba.zuper_api.AcombaServices
     {
         Task<string> AddCustomer(CustomerRequest customerRequest);
         Task<string> UpdateCustomer(CustomerRequest customerRequest);
+        Task<List<string>> ImportCustomers(List<CustomerDto> customers);
     }
     public class CustomerService : ICustomerService
     {
@@ -136,5 +137,67 @@ namespace acomba.zuper_api.AcombaServices
                 throw;
             }
         }
+        #region Import customers to acomba
+        public async Task<List<string>> ImportCustomers(List<CustomerDto> customers)
+        {
+            var results = new List<string>();
+            try
+            {
+                int error;
+                AcoSDK.Customer CustomerInt = new AcoSDK.Customer();
+                AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
+                foreach (var c in customers)
+                {
+                   
+                    CustomerInt.BlankCard();
+                    CustomerInt.BlankKey();
+                    //set customer primary key
+                    CustomerInt.PKey_CuNumber = c.customer_contact_no.phone;
+
+                    //reserve primary key to add
+                    error = CustomerInt.ReserveCardNumber();
+
+                    if (error == 0)
+                    {
+                        CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
+                        CustomerInt.CuSortKey = c.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
+                        CustomerInt.CuName = c.customer_first_name + " " + c.customer_last_name;
+                        //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
+                        // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
+                        // CustomerInt.CuPhoneNumber[(PhoneType)1] = "0912345678"; //customerRequest.customer_contact_no.mobile;
+                        CustomerInt.CuActive = 1;
+
+                        error = CustomerInt.AddCard();
+                        if (error == 0)
+                        {
+
+                            string res = "Customer Id :" + c.customer_contact_no.phone + " successfully added.";
+                            results.Add(res);
+                        }
+                        else
+                        {
+                            error = CustomerInt.FreeCardNumber();
+                           
+                            string res = "Customer Id :" + c.customer_contact_no.phone + "insert failed. Error :" + Acomba.GetErrorMessage(error);
+                            results.Add(res);
+
+                        }
+
+                    }
+                    else
+                    {
+                        string res = "Customer Id :" + c.customer_contact_no.phone + "insert failed. Error :" + Acomba.GetErrorMessage(error);
+                        results.Add(res);
+                    }
+                }
+
+                return results;
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+        }
+        #endregion
     }
 }
