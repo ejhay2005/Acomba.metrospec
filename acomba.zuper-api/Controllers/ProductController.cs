@@ -72,6 +72,29 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("import-products")]
+        public async Task<IActionResult> ImportProducts()
+        {
+            try
+            {
+                using (var http = new HttpClient())
+                {
+                    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}product");
+                    HttpResponseMessage response = await http.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    var result = JsonConvert.DeserializeObject<Products>(responseBody);
+
+                    var _import = _productService.ImportProducts(result.data);
+                    return Ok(_import);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpPost("get-acomba-product")]
         public async Task<IActionResult> GetAcombaProduct(string productId)
         {
