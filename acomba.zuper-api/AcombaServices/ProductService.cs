@@ -10,7 +10,7 @@ namespace acomba.zuper_api.AcombaServices
         Task<string> AddProduct(ProductDto product);
         Task<string> UpdateProduct(ProductDto product);
         Task<object> GetProduct(string _productId);
-        Task<List<string>> ImportProducts(List<ProductDto> products);
+        Task<List<string>> ImportProducts(List<ProductDto1> products);
     }
     public class ProductService : IProductService
     {
@@ -41,6 +41,7 @@ namespace acomba.zuper_api.AcombaServices
                 error = productInt.ReserveCardNumber();
                 if (error == 0)
                 {
+                    
 
                     var _insert = InsertProduct(product.product_id, product.meta_data[1].value, product.product_name, product.quantity.Value, product.price.Value ,product.meta_data[2].value);
                     if (_insert == 0)
@@ -80,7 +81,7 @@ namespace acomba.zuper_api.AcombaServices
 
             productInt.PrNumber = productNumber;
             productInt.PrActive = 1;
-            if(price != null)
+            if(price != null || price != 0)
             {
                 productInt.PrSellingPrice[0,1] = price.Value;
             }
@@ -97,9 +98,10 @@ namespace acomba.zuper_api.AcombaServices
             {
                 productInt.PrDescription[1] = desc;
             }
-            if(qty != null)
+            if(qty != null || qty != 0)
             {
-                productInt.PrQtyOnHand = qty.Value;
+                productInt.PrMaximumQty = qty.Value;
+                
             }
            
 
@@ -241,7 +243,7 @@ namespace acomba.zuper_api.AcombaServices
         }
         #endregion
         #region Import Product From Zuper to Acomba
-        public async Task<List<string>> ImportProducts(List<ProductDto> products)
+        public async Task<List<string>> ImportProducts(List<ProductDto1> products)
         {
             try
             {
@@ -262,7 +264,10 @@ namespace acomba.zuper_api.AcombaServices
                     error = productInt.ReserveCardNumber();
                     if (error == 0)
                     {
-                        var _insert = InsertProduct(p.product_id, p.meta_data[1].value, p.product_name, p.quantity.Value, p.price.Value, p.meta_data[2].value);
+                        var gpNumber = p.meta_data.Count() == 0 ? string.Empty : p.meta_data.Where(i => i.label == "Group").FirstOrDefault().value.ToString();
+                        var upc = p.meta_data.Count() == 0 ? string.Empty : p.meta_data.Where(i => i.label== "Upc").FirstOrDefault().value.ToString();
+                        var qty = p.quantity == 0 ? 1 : p.quantity;
+                        var _insert = InsertProduct(p.product_id, gpNumber, p.product_name, qty, p.price, upc);
                         if (_insert == 0)
                         {
                             string res = "Product: " + p.product_id + " successfully added.";

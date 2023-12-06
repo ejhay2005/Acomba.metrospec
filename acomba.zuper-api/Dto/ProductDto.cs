@@ -48,16 +48,16 @@
     {
         public string product_uid { get; set; }
         public string product_id { get; set; }
-        public ProductCategory product_category { get; set; }
+        public ProductCategory? product_category { get; set; }
         public string product_image { get; set; }
         public string product_barcode { get; set; }
         public List<object> product_files { get; set; }
         public string product_name { get; set; }
         public string product_description { get; set; }
         public string product_type { get; set; }
-        public List<object> meta_data { get; set; }
+        public List<CustomField>? meta_data { get; set; }
         public string product_manual_link { get; set; }
-        public List<object> location_availability { get; set; }
+        public List<object>? location_availability { get; set; }
         public bool track_quantity { get; set; }
         public int quantity { get; set; }
         public int min_quantity { get; set; }

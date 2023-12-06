@@ -16,7 +16,7 @@ namespace acomba.zuper_api.Controllers
     {
         private readonly IConfiguration configuration;
         private readonly DbService dbService;
-        private readonly ICustomerService customerService;
+        private readonly ICustomerService _customerService;
         static string ZuperUrl;
         static List<CustomerDto> _customerList = new List<CustomerDto>();
         public CustomerController(IConfiguration configuration, DbService dbService,ICustomerService customerService)
@@ -24,7 +24,7 @@ namespace acomba.zuper_api.Controllers
             this.configuration = configuration;
             if (string.IsNullOrEmpty(ZuperUrl)) ZuperUrl = configuration["ZuperUrl"];
             this.dbService = dbService;
-            this.customerService = customerService;
+            _customerService = customerService;
         }
         [HttpGet("get-customer")]
         public async Task<IActionResult> GetCustomer()
@@ -65,7 +65,7 @@ namespace acomba.zuper_api.Controllers
                 await dbService.SaveChangesAsync();
 
                 //save customer data in acomba 
-               var result = await customerService.AddCustomer(_cus);
+               var result = await _customerService.AddCustomer(_cus);
                 return Ok(result);
             }
             catch(Exception ex)
@@ -91,7 +91,7 @@ namespace acomba.zuper_api.Controllers
                     await dbService.SaveChangesAsync();
 
                     //update customer in acomba
-                    var result = await customerService.UpdateCustomer(_cus);
+                    var result = await _customerService.UpdateCustomer(_cus);
                     return Ok(result);
                 }
                 else
@@ -125,7 +125,7 @@ namespace acomba.zuper_api.Controllers
                     var responseBody = response.Content.ReadAsStringAsync().Result;
                     var result = JsonConvert.DeserializeObject<CustomerResponse>(responseBody);
 
-                    var _import = customerService.ImportCustomers(result.data);
+                    var _import = _customerService.ImportCustomers(result.data);
                    
                     return Ok(_import);
                 }
