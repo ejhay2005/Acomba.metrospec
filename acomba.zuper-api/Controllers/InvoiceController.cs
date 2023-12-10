@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace acomba.zuper_api.Controllers
 {
-    //[ServiceFilter(typeof(ApiKeyAuthFilter))]
+    [ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class InvoiceController : ControllerBase
