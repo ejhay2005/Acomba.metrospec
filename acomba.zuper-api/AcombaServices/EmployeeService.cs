@@ -7,6 +7,7 @@ namespace acomba.zuper_api.AcombaServices
     public interface IEmployeeService
     {
         Task<string> AddEmployee(EmployeeDto employee);
+        Task<string> UpdateEmployee(EmployeeDto employee);
     }
     public class EmployeeService : IEmployeeService
     {
@@ -22,14 +23,14 @@ namespace acomba.zuper_api.AcombaServices
             _configuration = configuration;
             _connection = connection;
         }
-
+        #region Add employee
         public async Task<string> AddEmployee(EmployeeDto employee)
         {
-           
+
             int error;
             _connection.OpenConnection();
 
-           
+
             employeeInt.BlankCard();
             employeeInt.BlankKey();
 
@@ -39,24 +40,46 @@ namespace acomba.zuper_api.AcombaServices
 
             //reserve
             error = employeeInt.ReserveCardNumber();
-            if(error == 0)
+            if (error == 0)
             {
+
+                //setting up custom_fields
+                string _gender =  !employee.custom_fields.Where(i => i.label == "Gender").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Gender").FirstOrDefault().value;
+                string _marital = !employee.custom_fields.Where(i => i.label == "Marital Status").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Marital Status").FirstOrDefault().value;
+                string _language = !employee.custom_fields.Where(i => i.label == "Language").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Language").FirstOrDefault().value;
+                DateTime _birth = !employee.custom_fields.Where(i => i.label == "Birth").Any() ? DateTime.Now : Convert.ToDateTime(employee.custom_fields.Where(i => i.label == "Birth").FirstOrDefault().value);
+                DateTime _arrival = !employee.custom_fields.Where(i => i.label == "Hiring").Any() ? DateTime.Now : Convert.ToDateTime(employee.custom_fields.Where(i => i.label == "Hiring").FirstOrDefault().value);
+                DateTime _departure = !employee.custom_fields.Where(i => i.label == "Start").Any() ? DateTime.Now : Convert.ToDateTime(employee.custom_fields.Where(i => i.label == "Start").FirstOrDefault().value);
+                string _address = !employee.custom_fields.Where(i => i.label == "Address").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Address").FirstOrDefault().value;
+                string _city = !employee.custom_fields.Where(i => i.label == "City").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "City").FirstOrDefault().value;
+                string _country = !employee.custom_fields.Where(i => i.label == "Country").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Country").FirstOrDefault().value;
+                string _paymentMode = !employee.custom_fields.Where(i => i.label == "Mode").Any() ? string.Empty : employee.custom_fields.Where(i => i.label == "Mode").FirstOrDefault().value;
+                string _institution = !employee.custom_fields.Where(i => i.label == "Institution").Any() ? "000" : employee.custom_fields.Where(i => i.label == "Institution").FirstOrDefault().value;
+                string _branchCode = !employee.custom_fields.Where(i => i.label == "Branch").Any() ? "00000" : employee.custom_fields.Where(i => i.label == "Branch").FirstOrDefault().value;
+                string _accountNo = !employee.custom_fields.Where(i => i.label == "Account Number").Any() ? "0" : employee.custom_fields.Where(i => i.label == "Account Number").FirstOrDefault().value;
+
+                //personal information
                 employeeInt.EmNumber = employeeInt.PKey_EmNumber;
                 employeeInt.EmName = employee.last_name;
                 employeeInt.EmFirstName = employee.first_name;
                 employeeInt.EmSortKey = employee.last_name;
                 employeeInt.EmSIN = "000000000";
-                employeeInt.EmGender = PA_GenderType.PA_Gender_Min;
-                employeeInt.EmMaritalStatus = PA_MaritalStatusType.PA_MaritalStatus_Undefined;
-                employeeInt.EmBirthdate = DateTime.Now;
-                employeeInt.EmArrivalDate = DateTime.Now;
+                employeeInt.EmGender = GetGenderType(_gender);
+                employeeInt.EmMaritalStatus =GetMaritalStatus(_marital);
+                employeeInt.EmBirthdate = _birth;
+                employeeInt.EmArrivalDate = _arrival;
+                employeeInt.EmDepartureDate = _departure;
+                employeeInt.EmLanguage = GetLanguage(_language);
+                employeeInt.EmAddress = _address;
+                employeeInt.EmCity = _city;
+                employeeInt.EmISOCountryCode = _country;
                 employeeInt.EmActive = 1;
 
                 //setting up payment mode
-                employeeInt.EmPaymentMode = PA_PaymentModeType.PA_PaymentMode_DirectDeposit;
-                employeeInt.EmInstitutionNumber = "000";
-                employeeInt.EmBranchNumber = "0";
-                employeeInt.EmAccountNumber = "0";
+                employeeInt.EmPaymentMode = GetPaymentModeType(_paymentMode);
+                employeeInt.EmInstitutionNumber = _institution;
+                employeeInt.EmBranchNumber = _branchCode;
+                employeeInt.EmAccountNumber = _accountNo;
 
                 //federal
                 employeeInt.Em_Fed_IT_CalculationMethod = PA_FederalIncomeTaxType.PA_Fed_IT_None;
@@ -70,9 +93,9 @@ namespace acomba.zuper_api.AcombaServices
                 //Additional deduction
                 employeeInt.Em_Fed_IT_AdditionnalDeduction = 0;
                 //Department
-                employeeInt.FnDepartmentCP[1] =  GetDepartmentCardPos(GetDepartment(employee.designation));
+                employeeInt.FnDepartmentCP[1] = GetDepartmentCardPos(GetDepartment(employee.designation));
                 employeeInt.EmFunctionsCP[1] = 1;
-                employeeInt.EmTotalFunctions= 1;
+                employeeInt.EmTotalFunctions = 1;
                 employeeInt.FnOrder[1] = 1;
                 employeeInt.FnDescription[1] = employee.designation;
                 employeeInt.FnActive[1] = 1;
@@ -91,7 +114,7 @@ namespace acomba.zuper_api.AcombaServices
 
                 //The employee is paid an hourly wage for this role
                 employeeInt.set_Fn_Conditions_OnOff(1, PA_ConditionType.PA_Cond_HourlyWage, 1);
-                
+
                 employeeInt.set_Fn_Conditions_OnOff(1, PA_ConditionType.PA_Cond_CSST, -1);
                 employeeInt.set_Fn_Conditions_OnOff(1, PA_ConditionType.PA_Cond_GroupInsurance, -1);
                 employeeInt.set_Fn_Conditions_OnOff(1, PA_ConditionType.PA_Cond_Tips, -1);
@@ -100,7 +123,7 @@ namespace acomba.zuper_api.AcombaServices
 
 
                 error = employeeInt.AddCard();
-                if(error == 0)
+                if (error == 0)
                 {
                     return "Success";
                 }
@@ -108,7 +131,7 @@ namespace acomba.zuper_api.AcombaServices
                 {
                     string _error = "Error :" + Acomba.GetErrorMessage(error);
                     error = employeeInt.FreeCardNumber();
-                    if(error == 0)
+                    if (error == 0)
                     {
                         return _error;
                     }
@@ -116,7 +139,7 @@ namespace acomba.zuper_api.AcombaServices
                     {
                         return "Error :" + Acomba.GetErrorMessage(error);
                     }
-                   
+
                 }
             }
             else
@@ -138,6 +161,80 @@ namespace acomba.zuper_api.AcombaServices
             else
             {
                 return 0;
+            }
+        }
+        //Get Gender Type
+        private PA_GenderType GetGenderType(string gender)
+        {
+            switch (gender)
+            {
+                case "Male":
+                    return PA_GenderType.PA_Gender_Male;
+                case "Female":
+                    return PA_GenderType.PA_Gender_Female;
+                default:
+                    return PA_GenderType.PA_Gender_Min;
+            }
+        }
+        // Get Marital Status Type
+        private PA_MaritalStatusType GetMaritalStatus(string status)
+        {
+            switch(status)
+            {
+                case "Single":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Single;
+                case "Married":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Married;
+                case "Separated":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Separated;
+                case "Common Law":
+                    return PA_MaritalStatusType.PA_MaritalStatus_CommonLaw;
+                case "Widowed":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Widowed;
+                case "Divorced":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Divorced;
+                case "Membr. of Religious Order":
+                    return PA_MaritalStatusType.PA_MaritalStatus_Religious;
+                default:
+                    return PA_MaritalStatusType.PA_MaritalStatus_Undefined;
+            }
+        }
+
+        //Get Language
+        private int GetLanguage(string language)
+        {
+            switch(language)
+            {
+                case "French":
+                    return 12;
+                case "English":
+                    return 9;
+                case "Danish":
+                    return 6;
+                case "Dutch":
+                    return 19;
+                case "Finnish":
+                    return 11;
+                case "German":
+                    return 7;
+                case "Italian":
+                    return 16;
+                case "Hungarian":
+                    return 14;
+                default:
+                    return 9;
+            }
+        }
+        private PA_PaymentModeType GetPaymentModeType(string mode)
+        {
+            switch (mode)
+            {
+                case "Check":
+                    return PA_PaymentModeType.PA_PaymentMode_Check;
+                case "Direct Deposit":
+                    return PA_PaymentModeType.PA_PaymentMode_DirectDeposit;
+                default:
+                    return PA_PaymentModeType.PA_PaymentMode_DirectDeposit;
             }
         }
         //private int CreateDepartment(int id,string name)
@@ -184,5 +281,54 @@ namespace acomba.zuper_api.AcombaServices
                 default: return 1;
             }
         }
+        #endregion
+        #region Update Employee
+        public async Task<string> UpdateEmployee(EmployeeDto employee)
+        {
+            int error;
+            const int noIndex = 1;
+
+            employeeInt.BlankKey();
+            employeeInt.PKey_EmNumber = employee.emp_code;
+
+            error = employeeInt.FindKey(1,false);
+            if (error == 0)
+            {
+                employeeInt.EmNumber = employeeInt.PKey_EmNumber;
+                employeeInt.EmName = employee.last_name;
+                employeeInt.EmFirstName = employee.first_name;
+                employeeInt.EmSortKey = employee.last_name;
+
+                error = employeeInt.ModifyCard(true);
+                
+                if (error == 0)
+                {
+                    return "Update completed successfully";
+                }
+                else
+                {
+                    error = employeeInt.FreeCard();
+                    string _error = Acomba.GetErrorMessage(error);
+                    if (error != 0)
+                    {
+                        return "Error: " + Acomba.GetErrorMessage(error);
+                    }
+                    return "Error: " + _error;
+                }
+            }
+            else
+            {
+                return "Error: " + Acomba.GetErrorMessage(error);
+            }
+
+        }
+        #endregion
+        #region Add Employee Timesheet
+        //public async Task<string> AddTimesheets(TimesheetsDto timesheetsDto)
+        //{
+
+
+        //}
+        #endregion
     }
 }

@@ -1,5 +1,9 @@
 ﻿namespace acomba.zuper_api.Dto
 {
+    public class EmployeeResponse : ResponseData
+    {
+        public EmployeeDto data { get; set; }
+    }
     public class EmployeeDto
     {
         public string user_uid { get; set; }
@@ -18,6 +22,7 @@
         public string? designation { get; set; }
         public string? prefix { get; set; }
         public string? company_uid { get; set; }
+        public List<CustomField>? custom_fields { get; set; }
         
     }
 }
