@@ -8,7 +8,7 @@ using static System.Net.WebRequestMethods;
 
 namespace acomba.zuper_api.Controllers
 {
-    [ServiceFilter(typeof(ApiKeyAuthFilter))]
+    //[ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class EmployeeController : ControllerBase
@@ -46,6 +46,11 @@ namespace acomba.zuper_api.Controllers
             var result = await _employeeService.UpdateEmployee(employee);
             return Ok(result);
         }
-        
+        [HttpGet("import-employees-zuper")]
+        public async Task<ActionResult> ImportEmployeesToZuper()
+        {
+            var result = await _employeeService.ExportEmployees();
+            return Ok(result);
+        }
     }
 }

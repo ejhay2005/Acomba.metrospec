@@ -23,6 +23,17 @@
         public string? prefix { get; set; }
         public string? company_uid { get; set; }
         public List<CustomField>? custom_fields { get; set; }
-        
+        public int role_id { get; set; }
+        public string? password { get; set; }
+        public string? confirm_password { get; set; }
+        public List<WorkHour> work_hours { get; set; }
+    }
+    public class WorkHour
+    {
+        public string day { get; set; }
+        public bool is_enabled { get; set; }
+        public string start_time { get; set; }
+        public string end_time { get; set; }
+        public int work_mins { get; set; }
     }
 }
