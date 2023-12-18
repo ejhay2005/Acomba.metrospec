@@ -54,7 +54,7 @@
                     if (Error == 0)
                     {
                         // Recherche de l'usager "supervisor" pour trouver son CardPos
-                        UserInt.PKey_UsNumber = "supervisor";
+                        UserInt.PKey_UsNumber = _configuration["Pkey"];
                         Error = UserInt.FindKey(1, false);
 
                         if (Error == 0)

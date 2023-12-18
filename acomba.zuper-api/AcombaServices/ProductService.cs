@@ -1,5 +1,7 @@
 ﻿using acomba.zuper_api.Dto;
+using AcoSDK;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -11,6 +13,7 @@ namespace acomba.zuper_api.AcombaServices
         Task<string> UpdateProduct(ProductDto product);
         Task<object> GetProduct(string _productId);
         Task<List<string>> ImportProducts(List<ProductDto1> products);
+        Task<object> ImportProductsToZuper();
     }
     public class ProductService : IProductService
     {
@@ -300,6 +303,99 @@ namespace acomba.zuper_api.AcombaServices
 
 
 
+        }
+        #endregion
+        #region Import Product to Zuper
+        public async Task<object> ImportProductsToZuper()
+        {
+            try
+            {
+                int count = 1000; // number of products to import
+                int cardpos = 1; //CardPos of the first customer file to consult
+                int error;
+                var customFields = new List<CustomField>();
+                var productList = new List<ProductDto>();
+
+                _connection.OpenConnection();
+
+                error = productInt.GetCards(cardpos, count);
+                if(error == 0 || productInt.CursorUsed > 0)
+                {
+                    for (int i = 0; i < productInt.CursorUsed; i++)
+                    {
+                        productInt.Cursor = i;
+                        if (productInt.PrStatus == 0)
+                        {
+
+                            var product = new ProductDto()
+                            {
+                                product_type = GetProductGroupDesc(productInt.PrProductGroupNumber),
+                                product_id = productInt.PrNumber,
+                                product_name = productInt.PrDescription[1],
+                                price = productInt.PrSellingPrice[0, 1],
+                                track_quantity = true,
+                                quantity = Convert.ToInt32(productInt.PrQtyOnHand),
+                                min_quantity = Convert.ToInt32(productInt.PrMaximumQty)
+                            };
+                            productList.Add(product);
+
+                        }
+                    }
+                }
+                _connection.CloseConnection();
+                var results = await ImportToZuper(productList);
+                return results;
+            }
+            catch(Exception ex)
+            {
+                _connection.CloseConnection();
+                return ex.Message;
+            }
+        }
+        private string GetProductGroupDesc(int id)
+        {
+            var productGroupInt = new AcoSDK.ProductGroup();
+            int error,cardpos;
+
+            productGroupInt.BlankKey();
+            productGroupInt.PKey_PGNumber = id;
+            error = productGroupInt.FindKey(1, false);
+            if(error == 0)
+            {
+                cardpos = productGroupInt.Key_PGCardPos;
+                error = productGroupInt.GetCard(cardpos);
+
+                if(error == 0)
+                {
+                    return productGroupInt.PGDescription;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            else
+            {
+                return "";
+            }
+            
+        }
+        private async Task<List<ResponseResult>> ImportToZuper(List<ProductDto> _products)
+        {
+            var results = new List<ResponseResult>();
+
+            foreach (var e in _products)
+            {
+                var _http = new HttpClient();
+                _http.DefaultRequestHeaders.Add("Accept", "application/json");
+                _http.DefaultRequestHeaders.Add("x-api-key", _configuration["MetricApiKey"]);
+                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/product", e);
+                var responseBody = response.Content.ReadAsStringAsync().Result;
+                var result = JsonConvert.DeserializeObject<ResponseResult>(responseBody);
+                results.Add(result);
+            }
+
+            return results;
         }
         #endregion
     }

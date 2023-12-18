@@ -19,6 +19,8 @@
         public bool is_deleted { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
+        public Role role { get; set; }
+
     }
     public class TimesheetsResponse : ResponseData
     {
@@ -42,9 +44,11 @@
         public object remarks { get; set; }
         public DateTime checked_time { get; set; }
         public DateTime created_at { get; set; }
-        public Users users { get; set; }
+        public Users user { get; set; }
         public CreatedUser created_user { get; set; }
+        public CreatedUser triggered_by { get; set; }
         public object timesheet_location { get; set; }
+        public string company_uid { get; set; }
     }
 
     public class Users
