@@ -1,5 +1,6 @@
 ﻿using acomba.zuper_api.Dto;
 using AcoSDK;
+using Newtonsoft.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace acomba.zuper_api.AcombaServices
@@ -9,11 +10,14 @@ namespace acomba.zuper_api.AcombaServices
         Task<string> AddCustomer(CustomerRequest customerRequest);
         Task<string> UpdateCustomer(CustomerRequest customerRequest);
         Task<List<string>> ImportCustomers(List<CustomerDto> customers);
+        Task<object> ImportCustomersToZuper();
     }
     public class CustomerService : ICustomerService
     {
         private readonly IConfiguration _configuration;
         private readonly IAcombaConnection _connection;
+        private AcoSDK.Customer CustomerInt = new AcoSDK.Customer();
+        private AcombaX Acomba = new AcoSDK.AcombaX();
         public CustomerService(IConfiguration configuration, IAcombaConnection connection)
         {
             _configuration = configuration;
@@ -26,8 +30,7 @@ namespace acomba.zuper_api.AcombaServices
             {
                 _connection.OpenConnection();
                 int error;
-                AcoSDK.Customer CustomerInt = new AcoSDK.Customer();
-                AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
+                
                 CustomerInt.BlankCard();
                 CustomerInt.BlankKey();
 
@@ -86,8 +89,7 @@ namespace acomba.zuper_api.AcombaServices
                 _connection.OpenConnection();
                 const int noIndex = 1;
                 int error,cardpos;
-                AcoSDK.Customer CustomerInt = new AcoSDK.Customer();
-                AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
+               
 
                 CustomerInt.BlankKey();
                 CustomerInt.PKey_CuNumber = customerRequest.customer_contact_no.phone;
@@ -197,6 +199,91 @@ namespace acomba.zuper_api.AcombaServices
             {
                 throw;
             }
+        }
+        #endregion
+        #region Import customers to zuper
+        public async Task<object> ImportCustomersToZuper()
+        {
+            int count = 1000; // number of customers to import
+            int cardpos = 1; //CardPos of the first customer file to consult
+            int error;
+            var customFields = new List<CustomField>();
+            var customerList = new List<CustomerDto>();
+            try
+            {
+                _connection.OpenConnection();
+
+                error = CustomerInt.GetCards(cardpos, count);
+                if(error == 0 || CustomerInt.CursorUsed > 0)
+                {
+                    for(int i = 0; i < CustomerInt.CursorUsed; i++)
+                    {
+                        CustomerInt.Cursor = i;
+                        if(CustomerInt.CuStatus == 0)
+                        {
+                            var _customer = new CustomerDto()
+                            {
+                                customer_email = CustomerInt.CuEMail[EMailType.EMail_One],
+                                customer_first_name = CustomerInt.CuName,
+                                customer_last_name = CustomerInt.CuSortKey,
+                                customer_company_name = CustomerInt.CuName,
+                                customer_contact_no = new CustomerContactNo()
+                                {
+                                    phone = CustomerInt.CuPhoneNumber[PhoneType.Ph_Number],
+                                    work = CustomerInt.CuPhoneNumber[PhoneType.Ph_User1],
+                                    mobile = CustomerInt.CuPhoneNumber[PhoneType.Ph_User2]
+                                },
+                                customer_address = new CustomerAddress()
+                                {
+                                    street = CustomerInt.CuAddress,
+                                    city = CustomerInt.CuCity,
+                                    state = CustomerInt.CuISOCountryCode,
+                                    zip_code = CustomerInt.CuPostalCode
+                                },
+                                customer_billing_address = new CustomerBillingAddress()
+                                {
+                                    street = CustomerInt.CuAddress,
+                                    city = CustomerInt.CuCity,
+                                    state = CustomerInt.CuISOCountryCode,
+                                    country = CustomerInt.CuISOCountryCode,
+                                    zip_code = CustomerInt.CuPostalCode,
+
+                                }
+                            };
+
+                            customerList.Add(_customer);
+                        }
+                    }
+                   
+                }
+                _connection.CloseConnection();
+                var result = await ImportToZuper(customerList);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _connection.CloseConnection();
+                return ex.Message;
+            }
+           
+           
+        }
+        private async Task<List<ResponseResult>> ImportToZuper(List<CustomerDto> _customers)
+        {
+            var results = new List<ResponseResult>();
+
+            foreach (var e in _customers)
+            {
+                var _http = new HttpClient();
+                _http.DefaultRequestHeaders.Add("Accept", "application/json");
+                _http.DefaultRequestHeaders.Add("x-api-key", _configuration["MetricApiKey"]);
+                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/customer", e);
+                var responseBody = response.Content.ReadAsStringAsync().Result;
+                var result = JsonConvert.DeserializeObject<ResponseResult>(responseBody);
+                results.Add(result);
+            }
+
+            return results;
         }
         #endregion
     }

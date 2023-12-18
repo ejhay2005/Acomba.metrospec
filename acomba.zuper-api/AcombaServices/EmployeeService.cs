@@ -9,7 +9,7 @@ namespace acomba.zuper_api.AcombaServices
     {
         Task<string> AddEmployee(EmployeeDto employee);
         Task<string> UpdateEmployee(EmployeeDto employee);
-        Task<object> ExportEmployees();
+        Task<object> ImportEmployeesToZuper();
     }
     public class EmployeeService : IEmployeeService
     {
@@ -350,7 +350,7 @@ namespace acomba.zuper_api.AcombaServices
         }
         #endregion
         #region Importing of Employees
-        public async Task<object> ExportEmployees()
+        public async Task<object> ImportEmployeesToZuper()
         {
             int count = 10;
             int error;
@@ -411,12 +411,13 @@ namespace acomba.zuper_api.AcombaServices
                         }
 
                     }
-                    //var result = ImportEmployeesToZuper(employeeList);
-
-                    return employeeList;
+                    _connection.CloseConnection();
+                    var result = ImportToZuper(employeeList);
+                    return result;
                 }
                 else
                 {
+                    _connection.CloseConnection();
                     return "Error :" + Acomba.GetErrorMessage(error);
                 }
             }
@@ -694,7 +695,7 @@ namespace acomba.zuper_api.AcombaServices
             
             return workHours;
         }
-        private async Task<List<ResponseResult>> ImportEmployeesToZuper(List<EmployeeDto> _employees)
+        private async Task<List<ResponseResult>> ImportToZuper(List<EmployeeDto> _employees)
         {
             var results = new List<ResponseResult>();
 

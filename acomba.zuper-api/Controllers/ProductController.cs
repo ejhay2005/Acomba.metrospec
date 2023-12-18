@@ -109,5 +109,11 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("import-product-zuper")]
+        public async Task<ActionResult> ImportEmployeesToZuper()
+        {
+            var result = await _productService.ImportProductsToZuper();
+            return Ok(result);
+        }
     }
 }

@@ -8,5 +8,6 @@ namespace acomba.zuper_api.Dto
         public string title { get; set; }
         public string message { get; set; }
         public object data { get; set; }
+        public string customer_uid { get; set; }
     }
 }

@@ -49,7 +49,7 @@ namespace acomba.zuper_api.Controllers
         [HttpGet("import-employees-zuper")]
         public async Task<ActionResult> ImportEmployeesToZuper()
         {
-            var result = await _employeeService.ExportEmployees();
+            var result = await _employeeService.ImportEmployeesToZuper();
             return Ok(result);
         }
     }

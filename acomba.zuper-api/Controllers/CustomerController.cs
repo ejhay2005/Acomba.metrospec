@@ -111,7 +111,7 @@ namespace acomba.zuper_api.Controllers
             var getCustomers = dbService.Customers.ToList();
             return Ok(getCustomers);
         }
-        [HttpGet("import-customers")]
+        [HttpGet("import-customers-acomba")]
         public async Task<IActionResult> ImportCustomers()
         {
             try
@@ -135,6 +135,13 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("import-customers-zuper")]
+        public async Task<IActionResult> ImportCustomersToZuper()
+        {
+            var result = await _customerService.ImportCustomersToZuper();
+            return Ok(result);
+        }
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("test-sdk")]
         public async Task<IActionResult> TestSdk()
         {
