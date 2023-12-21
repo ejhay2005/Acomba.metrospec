@@ -108,7 +108,7 @@ namespace acomba.zuper_api.Dto
         public List<string>? customer_tags { get; set; }
         public CustomerAddress? customer_address { get; set; }
         public CustomerBillingAddress? customer_billing_address { get; set; }
-        public List<object>? custom_fields { get; set; }
+        public List<CustomField>? custom_fields { get; set; }
         public bool? has_sla { get; set; }
         public Accounts? accounts { get; set; }
         public bool? is_active { get; set; }
@@ -118,6 +118,29 @@ namespace acomba.zuper_api.Dto
         public CustomerContactNo? customer_contact_no { get; set; }
         public CustomerOrganization? customer_organization { get; set; }
         public string? id { get; set; }
+    }
+    public class CreateCustomerDto
+    {
+        public string? customer_uid { get; set; }
+        public string? customer_first_name { get; set; }
+        public string? customer_last_name { get; set; }
+        public string customer_category { get; set; }
+        public string? customer_company_name { get; set; }
+        public string? customer_email { get; set; }
+        //public int? no_of_jobs { get; set; }
+        public List<string>? customer_tags { get; set; }
+        public CustomerAddress? customer_address { get; set; }
+        public CustomerBillingAddress? customer_billing_address { get; set; }
+        public List<CustomField>? custom_fields { get; set; }
+        public bool? has_sla { get; set; }
+        public Accounts? accounts { get; set; }
+        public bool? is_active { get; set; }
+        public string? account_manager { get; set; }
+        //public bool? has_card_on_file { get; set; }
+        //public DateTime? created_at { get; set; }
+        public CustomerContactNo? customer_contact_no { get; set; }
+        public CustomerOrganization? customer_organization { get; set; }
+        //public string? id { get; set; }
     }
 
     public class SlaDurationDetails
@@ -131,5 +154,9 @@ namespace acomba.zuper_api.Dto
         public string? billing_frequency { get; set; }
         public string? payment_term { get; set; }
         public string? tax_group { get; set; }
+    }
+    public class Root
+    {
+        public CreateCustomerDto customer { get; set; }
     }
 }

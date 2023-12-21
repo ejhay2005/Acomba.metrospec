@@ -135,7 +135,7 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("import-customers-zuper")]
+        [HttpPost("import-customers-zuper")]
         public async Task<IActionResult> ImportCustomersToZuper()
         {
             var result = await _customerService.ImportCustomersToZuper();

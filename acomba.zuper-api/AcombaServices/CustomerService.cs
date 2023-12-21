@@ -1,6 +1,9 @@
 ﻿using acomba.zuper_api.Dto;
 using AcoSDK;
 using Newtonsoft.Json;
+using static System.Net.WebRequestMethods;
+using System.Text;
+using System;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace acomba.zuper_api.AcombaServices
@@ -207,8 +210,8 @@ namespace acomba.zuper_api.AcombaServices
             int count = 1000; // number of customers to import
             int cardpos = 1; //CardPos of the first customer file to consult
             int error;
-            var customFields = new List<CustomField>();
-            var customerList = new List<CustomerDto>();
+            
+            var customerList = new List<CreateCustomerDto>();
             try
             {
                 _connection.OpenConnection();
@@ -221,7 +224,9 @@ namespace acomba.zuper_api.AcombaServices
                         CustomerInt.Cursor = i;
                         if(CustomerInt.CuStatus == 0)
                         {
-                            var _customer = new CustomerDto()
+                            var customFields = new List<CustomField>();
+                            customFields.Add(new CustomField() { label = "CustomerNumber", value = CustomerInt.CuNumber });
+                            var _customer = new CreateCustomerDto()
                             {
                                 customer_email = CustomerInt.CuEMail[EMailType.EMail_One],
                                 customer_first_name = CustomerInt.CuName,
@@ -248,7 +253,10 @@ namespace acomba.zuper_api.AcombaServices
                                     country = CustomerInt.CuISOCountryCode,
                                     zip_code = CustomerInt.CuPostalCode,
 
-                                }
+                                },
+                                //custom_fields = customFields,
+                                customer_category = "7a162a70-b2d3-11ed-b877-4f8e5e43701d"
+
                             };
 
                             customerList.Add(_customer);
@@ -268,16 +276,27 @@ namespace acomba.zuper_api.AcombaServices
            
            
         }
-        private async Task<List<ResponseResult>> ImportToZuper(List<CustomerDto> _customers)
+        private async Task<List<ResponseResult>> ImportToZuper(List<CreateCustomerDto> _customers)
         {
             var results = new List<ResponseResult>();
 
             foreach (var e in _customers)
             {
+                var _reqBody = new Root()
+                {
+                    customer = e
+                };
                 var _http = new HttpClient();
                 _http.DefaultRequestHeaders.Add("Accept", "application/json");
                 _http.DefaultRequestHeaders.Add("x-api-key", _configuration["MetricApiKey"]);
-                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/customer", e);
+                var request = new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri($"{_configuration["ZuperUrl"]}/customers"),
+                    Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(_reqBody), Encoding.UTF8, "application/json")
+                };
+                var response = await _http.SendAsync(request);
+                //var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/customers", _reqBody);
                 var responseBody = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<ResponseResult>(responseBody);
                 results.Add(result);
