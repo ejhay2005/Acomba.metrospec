@@ -1,6 +1,7 @@
 ﻿using acomba.zuper_api.Dto;
 using AcoSDK;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -310,7 +311,7 @@ namespace acomba.zuper_api.AcombaServices
         {
             try
             {
-                int count = 1000; // number of products to import
+                int count = 5; // number of products to import
                 int cardpos = 1; //CardPos of the first customer file to consult
                 int error;
                 var customFields = new List<CustomField>();
@@ -329,13 +330,18 @@ namespace acomba.zuper_api.AcombaServices
 
                             var product = new ProductDto()
                             {
-                                product_type = GetProductGroupDesc(productInt.PrProductGroupNumber),
+                                product_type = "PRODUCT",  //GetProductGroupDesc(productInt.PrProductGroupNumber),
                                 product_id = productInt.PrNumber,
-                                product_name = productInt.PrDescription[1],
+                                product_name = string.IsNullOrEmpty(productInt.PrDescription[1]) ? "" : productInt.PrDescription[1],
+                                product_category = "784f2610-b2d3-11ed-884d-312422fc19c0", //default Supplies
+                                is_available = true,
                                 price = productInt.PrSellingPrice[0, 1],
                                 track_quantity = true,
+                                currency = "USD",
                                 quantity = Convert.ToInt32(productInt.PrQtyOnHand),
-                                min_quantity = Convert.ToInt32(productInt.PrMaximumQty)
+                                min_quantity = Convert.ToInt32(productInt.PrMaximumQty),
+                                
+                                location_availability = new List<Location>() { new Location() { location = "597cdec0-b2d4-11ed-a148-6bb858e65421",min_quantity = 10 } }
                             };
                             productList.Add(product);
 
@@ -386,10 +392,15 @@ namespace acomba.zuper_api.AcombaServices
 
             foreach (var e in _products)
             {
+                var _reqBody = new Dto.Product()
+                {
+                    product = e
+                };
+
                 var _http = new HttpClient();
                 _http.DefaultRequestHeaders.Add("Accept", "application/json");
                 _http.DefaultRequestHeaders.Add("x-api-key", _configuration["MetricApiKey"]);
-                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/product", e);
+                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/product", _reqBody);
                 var responseBody = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<ResponseResult>(responseBody);
                 results.Add(result);
