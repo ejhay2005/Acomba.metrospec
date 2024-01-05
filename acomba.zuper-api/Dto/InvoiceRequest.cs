@@ -63,8 +63,10 @@
     public class DiscountDetail
     {
         public string? type { get; set; }
+        public string? discount_label { get; set; }
+        public string? discount_applicability { get; set; }
         public int? percent { get; set; }
-        public int? value { get; set; }
+        public string? value { get; set; }
     }
     public class TaxDetail
     {
