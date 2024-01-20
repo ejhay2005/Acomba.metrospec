@@ -11,6 +11,7 @@ namespace acomba.zuper_api.AcombaServices
     public interface ICustomerService
     {
         Task<string> AddCustomer(CustomerRequest customerRequest);
+        Task<string> AddCustomerWebhook(CustomerRequestDto customerRequest);
         Task<string> UpdateCustomer(CustomerRequest customerRequest);
         Task<List<string>> ImportCustomers(List<CustomerDto> customers);
         Task<object> ImportCustomersToZuper();
@@ -26,7 +27,64 @@ namespace acomba.zuper_api.AcombaServices
             _configuration = configuration;
             _connection = connection;
         }
+        public async Task<string> AddCustomerWebhook(CustomerRequestDto customerRequest)
+        {
+            try
+            {
+                _connection.OpenConnection();
+                int error;
 
+                CustomerInt.BlankCard();
+                CustomerInt.BlankKey();
+
+                //set customer primary key
+                CustomerInt.PKey_CuNumber = customerRequest.customer_last_name + " " + customerRequest.customer_first_name;
+
+                //reserve primary key to add
+                error = CustomerInt.ReserveCardNumber();
+
+                if (error == 0)
+                {
+                    CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
+                    CustomerInt.CuSortKey = customerRequest.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
+                    CustomerInt.CuName = customerRequest.customer_first_name + " " + customerRequest.customer_last_name;
+                    //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
+                    // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
+                    // CustomerInt.CuPhoneNumber[(PhoneType)1] = "0912345678"; //customerRequest.customer_contact_no.mobile;
+                    CustomerInt.CuActive = 1;
+
+                    error = CustomerInt.AddCard();
+                    if (error == 0)
+                    {
+                        _connection.CloseConnection();
+                        return "Addition completed successfully";
+                    }
+                    else
+                    {
+                        error = CustomerInt.FreeCardNumber();
+                        if (error >= 0)
+                        {
+                            return "Error:" + Acomba.GetErrorMessage(error);
+                        }
+                        else
+                        {
+                            return "Error:" + Acomba.GetErrorMessage(error);
+                        }
+
+
+                    }
+
+                }
+                else
+                {
+                    return "Error:" + Acomba.GetErrorMessage(error);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
         public async Task<string> AddCustomer(CustomerRequest customerRequest)
         {
             try

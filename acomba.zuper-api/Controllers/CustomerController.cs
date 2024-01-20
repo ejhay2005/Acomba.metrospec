@@ -1,7 +1,6 @@
 ﻿using acomba.zuper_api.AcombaServices;
 using acomba.zuper_api.Authentication;
 using acomba.zuper_api.Dto;
-using acomba.zuper_api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +14,13 @@ namespace acomba.zuper_api.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly IConfiguration configuration;
-        private readonly DbService dbService;
         private readonly ICustomerService _customerService;
         static string ZuperUrl;
         static List<CustomerDto> _customerList = new List<CustomerDto>();
-        public CustomerController(IConfiguration configuration, DbService dbService,ICustomerService customerService)
+        public CustomerController(IConfiguration configuration,ICustomerService customerService)
         {
             this.configuration = configuration;
             if (string.IsNullOrEmpty(ZuperUrl)) ZuperUrl = configuration["ZuperUrl"];
-            this.dbService = dbService;
             _customerService = customerService;
         }
         [HttpGet("get-customer")]
@@ -49,28 +46,18 @@ namespace acomba.zuper_api.Controllers
             }
         }
         [HttpPost("add-customer")]
-        public async Task<IActionResult> AddCustomer(CustomerRequest _cus)
+        public async Task<IActionResult> AddCustomer(CustomerRequestDto _cus)
         {
             try
             {
-                Models.Customer cus = new Models.Customer()
-                {
-                    CustomerId = _cus.customer,
-                    CustomerFirstName = _cus.customer_first_name,
-                    CustomerLastName = _cus.customer_last_name,
-                    CustomerEmail = _cus.customer_email,
-                    CompanyUid = _cus.company_uid
-                };
-                dbService.Customers.Add(cus);
-                await dbService.SaveChangesAsync();
-
+              
                 //save customer data in acomba 
-               var result = await _customerService.AddCustomer(_cus);
+               var result = await _customerService.AddCustomerWebhook(_cus);
                 return Ok(result);
             }
             catch(Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException.Message == null ? ex.Message : ex.InnerException.Message);
             }
             
         }
@@ -79,37 +66,17 @@ namespace acomba.zuper_api.Controllers
         {
             try
             {
-                var update = dbService.Customers.Where(i => i.CustomerId == _cus.customer).FirstOrDefault();
-                if (update != null)
-                {
-                    update.CustomerEmail = _cus.customer_email;
-                    update.CustomerFirstName = _cus.customer_first_name;
-                    update.CustomerLastName = _cus.customer_last_name;
-                    update.CompanyUid = _cus.company_uid;
-
-                    dbService.Customers.Update(update);
-                    await dbService.SaveChangesAsync();
-
+                
                     //update customer in acomba
                     var result = await _customerService.UpdateCustomer(_cus);
                     return Ok(result);
-                }
-                else
-                {
-                    return BadRequest("No Customer found!");
-                }
+              
             }
             catch(Exception ex)
             {
                 return BadRequest(ex.Message); 
             }
             
-        }
-        [HttpGet("get-added-customer")]
-        public async Task<IActionResult> GetAddedCustomer()
-        {
-            var getCustomers = dbService.Customers.ToList();
-            return Ok(getCustomers);
         }
         [HttpGet("import-customers-acomba")]
         public async Task<IActionResult> ImportCustomers()
@@ -141,7 +108,7 @@ namespace acomba.zuper_api.Controllers
             var result = await _customerService.ImportCustomersToZuper();
             return Ok(result);
         }
-        [ApiExplorerSettings(IgnoreApi = true)]
+        
         [HttpGet("test-sdk")]
         public async Task<IActionResult> TestSdk()
         {
@@ -184,7 +151,7 @@ namespace acomba.zuper_api.Controllers
                     if (Error == 0)
                     {
                         // Recherche de l'usager "supervisor" pour trouver son CardPos
-                        UserInt.PKey_UsNumber = "supervisor";
+                        UserInt.PKey_UsNumber = configuration["Pkey"];
                         Error = UserInt.FindKey(1, false);
 
                         if (Error == 0)

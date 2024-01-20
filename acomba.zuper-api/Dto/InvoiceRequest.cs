@@ -30,7 +30,7 @@
         public List<NoteDetail>? notes { get; set; }
         public DiscountDetail? discount { get; set; }
         public List<TaxDetail>? tax { get; set; }
-        public List<CustomField>? custom_fields { get; set; }
+        public List<CustomFieldWebhook>? custom_fields { get; set; }
     }
 
     public class LineItemDetails

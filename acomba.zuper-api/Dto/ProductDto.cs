@@ -83,6 +83,6 @@
         public string? location { get; set; }
         public int? quantity { get; set; }
         public int? min_quantity { get; set; }
-        public string? serial_nos { get; set; }
+        public List<string>? serial_nos { get; set; }
     }
 }

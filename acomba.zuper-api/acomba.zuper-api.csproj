@@ -81,20 +81,20 @@
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>
     </COMReference>
-    <COMReference Include="AcoX0122">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>22</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0122</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
     <COMReference Include="AcoX0121">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>21</VersionMinor>
       <VersionMajor>1</VersionMajor>
       <Guid>00000001-0000-000f-1000-000ac0ba0121</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="AcoX0122">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>22</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>00000001-0000-000f-1000-000ac0ba0122</Guid>
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>
@@ -138,6 +138,10 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Models\" />
   </ItemGroup>
 
 </Project>
