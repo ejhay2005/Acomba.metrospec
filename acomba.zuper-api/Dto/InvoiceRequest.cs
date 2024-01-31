@@ -26,6 +26,7 @@
         public string? estimate { get; set; }
         public List<LineItemDetails>? line_items { get; set; }
         public double? sub_total { get; set; }
+        public double? total { get; set; }
         public List<Attachment>? attachments { get; set; }
         public List<NoteDetail>? notes { get; set; }
         public DiscountDetail? discount { get; set; }

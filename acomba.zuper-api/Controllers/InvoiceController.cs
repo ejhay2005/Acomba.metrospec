@@ -45,20 +45,35 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        //[HttpPost("add-invoice-webhook")]
+        //public async Task<IActionResult> AddInvoiceWebhook(InvoiceRequest invoiceRequest)
+        //{
+        //    try
+        //    {
+        //        _invoiceList.Add(invoiceRequest);
+        //        var result = await _invoiceService.AddInvoiceWebhook(invoiceRequest);
+        //        return Ok(result);
+        //    }
+        //    catch(Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //    }
+           
+        //}
         [HttpPost("add-invoice")]
         public async Task<IActionResult> AddInvoice(InvoiceRequest invoiceRequest)
         {
             try
             {
                 _invoiceList.Add(invoiceRequest);
-                var result = await _invoiceService.AddInvoice(invoiceRequest);
+                var result = await _invoiceService.AddInvoiceWebhook(invoiceRequest);
                 return Ok(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-           
+
         }
         [HttpGet("get-added-invoice")]
         public async Task<IActionResult> GetAddedInvoice()

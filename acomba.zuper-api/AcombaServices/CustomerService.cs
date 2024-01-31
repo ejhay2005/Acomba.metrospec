@@ -265,16 +265,16 @@ namespace acomba.zuper_api.AcombaServices
         #region Import customers to zuper
         public async Task<object> ImportCustomersToZuper()
         {
-            int count = 1000; // number of customers to import
+            int total = 0; // number of customers to import
             int cardpos = 1; //CardPos of the first customer file to consult
             int error;
-            
+            total = CustomerInt.NumCards();
             var customerList = new List<CreateCustomerDto>();
             try
             {
                 _connection.OpenConnection();
 
-                error = CustomerInt.GetCards(cardpos, count);
+                error = CustomerInt.GetCards(cardpos, total);
                 if(error == 0 || CustomerInt.CursorUsed > 0)
                 {
                     for(int i = 0; i < CustomerInt.CursorUsed; i++)

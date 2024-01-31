@@ -130,7 +130,7 @@ namespace acomba.zuper_api.AcombaServices
                 employeeInt.EmName = employee.last_name;
                 employeeInt.EmFirstName = employee.first_name;
                 employeeInt.EmSortKey = employee.last_name;
-                employeeInt.EmSIN = "000000000";
+                employeeInt.EmSIN = SIN;
                 employeeInt.EmGender = GetGenderType(_gender);
                 employeeInt.EmMaritalStatus =GetMaritalStatus(_marital);
                 employeeInt.EmBirthdate = _birth;

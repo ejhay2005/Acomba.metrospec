@@ -26,6 +26,7 @@ namespace acomba.zuper_api.AcombaServices
         }
 
         #region Add Invoice
+
         public async Task<string> AddInvoiceWebhook(InvoiceRequest invoiceRequest)
         {
             try
@@ -48,11 +49,13 @@ namespace acomba.zuper_api.AcombaServices
                 if (error == 0)
                 {
                     _transactionInt.InInvoiceType = InvoicingType.ITp_Invoice;
-                    _transactionInt.InReference = invoiceRequest.invoice_uid;
-                    _transactionInt.InDescription = "Description de la facture";
+                    _transactionInt.InReference = invoiceRequest.invoice.reference_no;
+                    _transactionInt.InDescription = invoiceRequest.invoice.reference_no;
                     _transactionInt.InCurrentDay = 1;
                     _transactionInt.InTransactionActive = 1;
-                    customerNumber = invoiceRequest.invoice.customer;
+                    _transactionInt.InInvoiceTotal = invoiceRequest.invoice.sub_total.Value;
+                    _transactionInt.InInvoiceTotal = invoiceRequest.invoice.total == null ? invoiceRequest.invoice.sub_total.Value : invoiceRequest.invoice.total.Value;
+                    customerNumber = invoiceRequest.invoice.customer_billing_address.last_name + " " + invoiceRequest.invoice.customer_billing_address.first_name;
 
                     _transactionInt.InCustomerSupplierCP = GetCustomerCardPos(customerNumber);
                     if (_transactionInt.InCustomerSupplierCP > 0)
@@ -84,21 +87,27 @@ namespace acomba.zuper_api.AcombaServices
                                 {
                                     _transactionInt.ILDescription[_transactionInt.TANumLines] = productInt.PrDescription[1];
                                     _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = productInt.PrSellingPrice[0, 1];
+                                   _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                                    _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                                    _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = Convert.ToInt32(invoiceRequest.invoice.line_items[i].total);
                                     _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = productInt.PrProductGroupCP;
-                                    _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+
                                     productFind = true;
                                 }
                             }
 
                             if (!productFind)
                             {
+                                
                                 _transactionInt.ILDescription[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].name;
                                 _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price.Value;
-                                _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = GetProductGroupCardPos(1);
-                                //_transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                                _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                                _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                                _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total.Value;
+                                _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = GetProductGroupCardPos(600);
+
                             }
                         }
-
 
 
                         error = _transactionInt.AddCard();
@@ -108,18 +117,18 @@ namespace acomba.zuper_api.AcombaServices
                         }
                         else
                         {
-                            return "Error :" + Acomba.GetErrorMessage(error);
+                            return "Error in adding invoice :" + Acomba.GetErrorMessage(error);
                         }
                     }
                     else
                     {
-                        return "Error :" + Acomba.GetErrorMessage(error);
+                        return $"Error in Customer Supplies:{customerNumber}" + Acomba.GetErrorMessage(error);
                     }
 
                 }
                 else
                 {
-                    return "Error :" + Acomba.GetErrorMessage(error);
+                    return "Error Customer not found:" + Acomba.GetErrorMessage(error);
                 }
 
             }
@@ -128,7 +137,8 @@ namespace acomba.zuper_api.AcombaServices
                 return "Error :" + ex.InnerException.Message == null ? ex.Message : ex.InnerException.Message;
             }
         }
-            public async Task<string> AddInvoice(InvoiceRequest invoiceRequest)
+
+        public async Task<string> AddInvoice(InvoiceRequest invoiceRequest)
         {
             try
             {
@@ -150,58 +160,35 @@ namespace acomba.zuper_api.AcombaServices
                 if (error == 0)
                 {
                     _transactionInt.InInvoiceType = InvoicingType.ITp_Invoice;
-                    _transactionInt.InReference = invoiceRequest.invoice_uid;
-                    _transactionInt.InDescription = "Description de la facture";
+                    _transactionInt.InReference = invoiceRequest.invoice.reference_no;
+                    _transactionInt.InDescription = invoiceRequest.invoice.reference_no;
                     _transactionInt.InCurrentDay = 1;
                     _transactionInt.InTransactionActive = 1;
-                    customerNumber = invoiceRequest.invoice.customer;
+                    _transactionInt.InInvoiceSubTotal = invoiceRequest.invoice.sub_total.Value;
+                    _transactionInt.InInvoiceTotal = invoiceRequest.invoice.total == null ? invoiceRequest.invoice.sub_total.Value : invoiceRequest.invoice.total.Value;
+                    customerNumber = invoiceRequest.invoice.customer_billing_address.last_name + " " + invoiceRequest.invoice.customer_billing_address.first_name;
 
                     _transactionInt.InCustomerSupplierCP = GetCustomerCardPos(customerNumber);
                     if (_transactionInt.InCustomerSupplierCP > 0)
                     {
                         GetCustomerInfo(_transactionInt.InCustomerSupplierCP);
 
-                        
-                        for(int i = 0; i < invoiceRequest.invoice.line_items.Count(); i++)
+
+                        for (int i = 0; i < invoiceRequest.invoice.line_items.Count(); i++)
                         {
                             _transactionInt.TANumLines++;
                             _transactionInt.ILType[_transactionInt.TANumLines] = InvoicingLineType.IL_Invoice;
 
                             _transactionInt.ILLineNumber[_transactionInt.TANumLines] = _transactionInt.TANumLines;
 
-                           
-                            
-                            _transactionInt.ILProductNumber[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].product_id;
-
-                            _transactionInt.ILProductCP[_transactionInt.TANumLines] = GetProductCardPos(_transactionInt.ILProductNumber[_transactionInt.TANumLines]);
-
-                            productFind = false;
-
-                            if (_transactionInt.ILProductCP[_transactionInt.TANumLines] > 0)
-                            {
-                                productInt.BlankCard();
-
-                                error = productInt.GetCard(_transactionInt.ILProductCP[_transactionInt.TANumLines]);
-                                if (error == 0)
-                                {
-                                    _transactionInt.ILDescription[_transactionInt.TANumLines] = productInt.PrDescription[1];
-                                    _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = productInt.PrSellingPrice[0, 1];
-                                    _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = productInt.PrProductGroupCP;
-                                    _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
-                                    productFind = true;
-                                }
-                            }
-
-                            if (!productFind)
-                            {
-                                _transactionInt.ILDescription[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].name;
-                                _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price.Value;
-                                _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = GetProductGroupCardPos(1);
-                                //_transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
-                            }
+                            _transactionInt.ILDescription[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].name;
+                            _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price.Value;
+                            _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                            _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
+                            _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total.Value;
+                            _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = 600;
                         }
 
-                        
 
                         error = _transactionInt.AddCard();
                         if (error == 0)
@@ -210,18 +197,18 @@ namespace acomba.zuper_api.AcombaServices
                         }
                         else
                         {
-                            return "Error :" + Acomba.GetErrorMessage(error);
+                            return "Error in adding invoice :" + Acomba.GetErrorMessage(error);
                         }
                     }
                     else
                     {
-                        return "Error :" + Acomba.GetErrorMessage(error);
+                        return $"Error in Customer Supplies:{customerNumber}" + Acomba.GetErrorMessage(error);
                     }
 
                 }
                 else
                 {
-                    return "Error :" + Acomba.GetErrorMessage(error);
+                    return "Error Customer not found:" + Acomba.GetErrorMessage(error);
                 }
 
             }
@@ -230,6 +217,26 @@ namespace acomba.zuper_api.AcombaServices
                 return "Error :" + ex.InnerException.Message == null ? ex.Message : ex.InnerException.Message;
             }
         }
+    
+        //public async Task<string> AddInvoice2(InvoiceRequest invoiceRequest)
+        //{
+        //    try
+        //    {
+        //        _connection.OpenConnection();
+        //        int error;
+        //        AcoSDK.ControlCustomer controlCustomerInt = new AcoSDK.ControlCustomer();
+        //        AcoSDK.Product productInt = new AcoSDK.Product();
+        //        AcoSDK.Tax taxInt = new AcoSDK.Tax();
+
+        //        var invoice = new Transaction();
+
+        //        invoice.
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //    }
+        //}
         private int GetCustomerCardPos(string customerNumber)
         {
             AcoSDK.Customer customerInt = new AcoSDK.Customer();
