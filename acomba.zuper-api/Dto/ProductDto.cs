@@ -30,7 +30,7 @@
         public string? product_name { get; set; }
         public string? product_description { get; set; }
         public string? product_type { get; set; }
-        public List<CustomField>? meta_data { get; set; }
+        public List<meta_data>? meta_data { get; set; }
         public string? product_manual_link { get; set; }
         public List<Location>? location_availability { get; set; }
         public bool? track_quantity { get; set; }
@@ -84,5 +84,10 @@
         public int? quantity { get; set; }
         public int? min_quantity { get; set; }
         public List<string>? serial_nos { get; set; }
+    }
+    public class meta_data
+    {
+        public string? label { get; set; }
+        public string? value { get; set; }
     }
 }

@@ -49,7 +49,7 @@
         public string? discount_type { get; set; }
         public string? location_uid { get; set; }
         public string? location_name { get; set; }
-        public int? total { get; set; }
+        public double total { get; set; }
     }
     public class Attachment
     {

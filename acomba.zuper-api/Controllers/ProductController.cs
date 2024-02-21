@@ -115,5 +115,11 @@ namespace acomba.zuper_api.Controllers
             var result = await _productService.ImportProductsToZuper();
             return Ok(result);
         }
+        [HttpGet("acomba-products")]
+        public async Task<ActionResult> GetAcombaProducts(int cardpos, int niche, int activateNumcard)
+        {
+            var result = await _productService.GetAllProduct( cardpos, niche, activateNumcard);
+            return Ok(result);
+        }
     }
 }

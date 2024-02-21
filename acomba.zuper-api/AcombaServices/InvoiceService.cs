@@ -89,7 +89,7 @@ namespace acomba.zuper_api.AcombaServices
                                     _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = productInt.PrSellingPrice[0, 1];
                                    _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
                                     _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
-                                    _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = Convert.ToInt32(invoiceRequest.invoice.line_items[i].total);
+                                    _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total;
                                     _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = productInt.PrProductGroupCP;
 
                                     productFind = true;
@@ -103,7 +103,7 @@ namespace acomba.zuper_api.AcombaServices
                                 _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price.Value;
                                 _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
                                 _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
-                                _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total.Value;
+                                _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total;
                                 _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = GetProductGroupCardPos(600);
 
                             }
@@ -185,7 +185,7 @@ namespace acomba.zuper_api.AcombaServices
                             _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price.Value;
                             _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
                             _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
-                            _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total.Value;
+                            _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total;
                             _transactionInt.ILProductGroupCP[_transactionInt.TANumLines] = 600;
                         }
 

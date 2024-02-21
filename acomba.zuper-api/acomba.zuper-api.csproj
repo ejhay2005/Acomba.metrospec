@@ -18,110 +18,11 @@
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>
     </COMReference>
-    <COMReference Include="AcoX0111">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>4464df40-2a2e-11d3-a841-00e0291c49c7</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0112">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>12</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0112</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0113">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>13</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0113</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
     <COMReference Include="AcoX0114">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>14</VersionMinor>
       <VersionMajor>1</VersionMajor>
       <Guid>00000001-0000-000f-1000-000ac0ba0114</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0115">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>15</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0115</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0116">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>16</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0116</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0118">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>18</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0118</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0121">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>21</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0121</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0122">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>22</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0122</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0124">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>24</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0124</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0125">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>25</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0125</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="AcoX0127">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>27</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>00000001-0000-000f-1000-000ac0ba0127</Guid>
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>

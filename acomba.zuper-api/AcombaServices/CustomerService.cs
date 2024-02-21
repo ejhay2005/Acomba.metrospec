@@ -5,14 +5,16 @@ using static System.Net.WebRequestMethods;
 using System.Text;
 using System;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.RegularExpressions;
+using acomba.zuper_api.Helper;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
 
 namespace acomba.zuper_api.AcombaServices
 {
     public interface ICustomerService
     {
-        Task<string> AddCustomer(CustomerRequest customerRequest);
-        Task<string> AddCustomerWebhook(CustomerRequestDto customerRequest);
-        Task<string> UpdateCustomer(CustomerRequest customerRequest);
+        Task<string> AddCustomerWebhook(CustomerDto customerRequest);
+        Task<string> UpdateCustomer(CustomerDto _customer);
         Task<List<string>> ImportCustomers(List<CustomerDto> customers);
         Task<object> ImportCustomersToZuper();
     }
@@ -20,180 +22,295 @@ namespace acomba.zuper_api.AcombaServices
     {
         private readonly IConfiguration _configuration;
         private readonly IAcombaConnection _connection;
+        private readonly ICountryHelper _countryHelper;
         private AcoSDK.Customer CustomerInt = new AcoSDK.Customer();
         private AcombaX Acomba = new AcoSDK.AcombaX();
-        public CustomerService(IConfiguration configuration, IAcombaConnection connection)
+        public CustomerService(IConfiguration configuration, IAcombaConnection connection, ICountryHelper countryHelper)
         {
             _configuration = configuration;
             _connection = connection;
+            _countryHelper = countryHelper;
         }
-        public async Task<string> AddCustomerWebhook(CustomerRequestDto customerRequest)
+        public async Task<string> AddCustomerWebhook(CustomerDto _customer)
         {
+           
+            string pattern = @"\d+";
             try
             {
                 _connection.OpenConnection();
                 int error;
 
-                CustomerInt.BlankCard();
-                CustomerInt.BlankKey();
+                //getting custom field data
+                var _projectNumber = _customer.custom_fields.Where(i => i.label.Contains("Project")).FirstOrDefault().value;
+                var _customerType = _customer.custom_fields.Where(i => i.label.Contains("Customer Type")).FirstOrDefault().value;
+                var _paymentTerm = _customer.custom_fields.Where(i => i.label.Contains("Payment Term")).FirstOrDefault().value;
+                var _receivable = _customer.custom_fields.Where(i => i.label.Contains("Receivable")).FirstOrDefault().value;
 
-                //set customer primary key
-                CustomerInt.PKey_CuNumber = customerRequest.customer_last_name + " " + customerRequest.customer_first_name;
-
-                //reserve primary key to add
-                error = CustomerInt.ReserveCardNumber();
-
-                if (error == 0)
+                if (_customerType == "Regular")
                 {
-                    CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
-                    CustomerInt.CuSortKey = customerRequest.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
-                    CustomerInt.CuName = customerRequest.customer_first_name + " " + customerRequest.customer_last_name;
-                    //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
-                    // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
-                    // CustomerInt.CuPhoneNumber[(PhoneType)1] = "0912345678"; //customerRequest.customer_contact_no.mobile;
-                    CustomerInt.CuActive = 1;
 
-                    error = CustomerInt.AddCard();
+
+                    var _matchTerm = Regex.Match(_paymentTerm, pattern);
+                    var _matchReceivable = Regex.Match(_receivable, pattern);
+
+                    CustomerInt.BlankCard();
+                    CustomerInt.BlankKey();
+
+                    //set customer primary key
+                    CustomerInt.PKey_CuNumber = _projectNumber;
+
+                    //reserve primary key to add
+                    error = CustomerInt.ReserveCardNumber();
+
                     if (error == 0)
                     {
-                        _connection.CloseConnection();
-                        return "Addition completed successfully";
+
+                        CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
+                        CustomerInt.CuSortKey = _customer.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
+                        CustomerInt.CuName = _customer.customer_first_name + " " + _customer.customer_last_name;
+                        CustomerInt.CuAddress = _customer.customer_address.street;
+                        CustomerInt.CuCity = _customer.customer_address.city;
+                        CustomerInt.CuPostalCode = _customer.customer_address.zip_code;
+                        CustomerInt.CuEMail[EMailType.EMail_One] = _customer.customer_email;
+                        CustomerInt.CuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country)? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
+                        CustomerInt.CuPhoneNumber[PhoneType.Ph_Min] = _customer.customer_contact_no.phone;
+                        CustomerInt.CuActive = 1;
+                        CustomerInt.CuTermNumber = Convert.ToInt32(_matchTerm.Value);
+                        CustomerInt.CuReceivable = Convert.ToInt32(_matchReceivable.Value);
+                        
+                        error = CustomerInt.AddCard();
+                        if (error == 0)
+                        {
+                            _connection.CloseConnection();
+                            return "Addition completed successfully";
+                        }
+                        else
+                        {
+                            error = CustomerInt.FreeCardNumber();
+                            _connection.CloseConnection();
+                            if (error >= 0)
+                            {
+                                return "Error:" + Acomba.GetErrorMessage(error);
+                            }
+                            else
+                            {
+                                return "Error:" + Acomba.GetErrorMessage(error);
+                            }
+
+
+                        }
+
                     }
                     else
                     {
                         error = CustomerInt.FreeCardNumber();
-                        if (error >= 0)
-                        {
-                            return "Error:" + Acomba.GetErrorMessage(error);
-                        }
-                        else
-                        {
-                            return "Error:" + Acomba.GetErrorMessage(error);
-                        }
-
-
+                        _connection.CloseConnection();
+                        return "Error:" + Acomba.GetErrorMessage(error);
                     }
-
                 }
-                else
+                else if(_customerType == "Supplier")
                 {
-                    return "Error:" + Acomba.GetErrorMessage(error);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-        public async Task<string> AddCustomer(CustomerRequest customerRequest)
-        {
-            try
-            {
-                _connection.OpenConnection();
-                int error;
-                
-                CustomerInt.BlankCard();
-                CustomerInt.BlankKey();
+                    var SupplierInt = new AcoSDK.Supplier();
 
-                //set customer primary key
-                CustomerInt.PKey_CuNumber = customerRequest.customer_contact_no.phone;
+                    SupplierInt.BlankCard();
+                    SupplierInt.BlankKey();
 
-                //reserve primary key to add
-                error = CustomerInt.ReserveCardNumber();
+                    SupplierInt.PKey_SuNumber = _projectNumber;
 
-                if (error == 0)
-                {
-                    CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
-                    CustomerInt.CuSortKey = customerRequest.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
-                    CustomerInt.CuName = customerRequest.customer_first_name + " " + customerRequest.customer_last_name;
-                    //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
-                   // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
-                   // CustomerInt.CuPhoneNumber[(PhoneType)1] = "0912345678"; //customerRequest.customer_contact_no.mobile;
-                    CustomerInt.CuActive = 1;
+                    error = SupplierInt.ReserveCardNumber();
 
-                    error = CustomerInt.AddCard();
                     if(error == 0)
                     {
-                        _connection.CloseConnection();
-                        return "Addition completed successfully";
+                        SupplierInt.SuNumber = _projectNumber;
+                        SupplierInt.SuSortKey = _customer.customer_last_name;
+                        SupplierInt.SuName = _customer.customer_first_name + " " + _customer.customer_last_name;
+                        SupplierInt.SuAddress = _customer.customer_address.street;
+                        SupplierInt.SuCity = _customer.customer_address.city;
+                        SupplierInt.SuPostalCode = _customer.customer_address.zip_code;
+                        SupplierInt.SuEMail[EMailType.EMail_One] = _customer.customer_email;
+                        SupplierInt.SuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
+                        SupplierInt.SuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                        SupplierInt.SuActive = 1;
+                        //SupplierInt.SuPaymentTermNumber = Convert.ToInt32(_matchTerm.Value);
+                        //SupplierInt.SuPaymentTermNumber = 
+
+                        error = SupplierInt.AddCard();
+                        if (error == 0)
+                        {
+                            _connection.CloseConnection();
+                            return "Addition completed successfully";
+                        }
+                        else
+                        {
+                            error = SupplierInt.FreeCardNumber();
+                            _connection.CloseConnection();
+                            if (error >= 0)
+                            {
+                                return "Error:" + Acomba.GetErrorMessage(error);
+                            }
+                            else
+                            {
+                                return "Error:" + Acomba.GetErrorMessage(error);
+                            }
+
+
+                        }
                     }
                     else
                     {
                         error = CustomerInt.FreeCardNumber();
-                        if (error >= 0)
-                        {
-                            return "Error:" + Acomba.GetErrorMessage(error);
-                        }
-                        else
-                        {
-                            return "Error:" + Acomba.GetErrorMessage(error);
-                        }
-
-                       
+                        _connection.CloseConnection();
+                        return "Error:" + Acomba.GetErrorMessage(error);
                     }
-                    
+
                 }
                 else
                 {
-                    return "Error:" + Acomba.GetErrorMessage(error);
+                    return "";
                 }
+
             }
             catch (Exception ex)
             {
-               throw;
-            }    
+                var error = CustomerInt.FreeCardNumber();
+                _connection.CloseConnection();
+                return "Error:" + ex.Message  ;
+            }
         }
-        public async Task<string> UpdateCustomer(CustomerRequest customerRequest)
+        
+        
+        public async Task<string> UpdateCustomer(CustomerDto _customer)
         {
             try
             {
                 _connection.OpenConnection();
                 const int noIndex = 1;
                 int error,cardpos;
-               
+                string pattern = @"\d+";
 
-                CustomerInt.BlankKey();
-                CustomerInt.PKey_CuNumber = customerRequest.customer_contact_no.phone;
+                //getting custom field data
+                var _projectNumber = _customer.custom_fields.Where(i => i.label.Contains("Project")).FirstOrDefault().value;
+                var _customerType = _customer.custom_fields.Where(i => i.label.Contains("Customer Type")).FirstOrDefault().value;
+                var _paymentTerm = _customer.custom_fields.Where(i => i.label.Contains("Payment Term")).FirstOrDefault().value;
+                var _receivable = _customer.custom_fields.Where(i => i.label.Contains("Receivable")).FirstOrDefault().value;
 
-                error = CustomerInt.FindKey(noIndex, false);
-                if(error == 0)
+                if (_customerType == "Regular")
                 {
-                    cardpos = CustomerInt.Key_CuCardPos;
-                    error = CustomerInt.ReserveCard(cardpos);
+                    CustomerInt.BlankKey();
+                    CustomerInt.PKey_CuNumber = _projectNumber;
 
-                    if(error == 0)
+                    error = CustomerInt.FindKey(noIndex, false);
+                    if (error == 0)
                     {
-                        CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
-                        CustomerInt.CuSortKey = customerRequest.customer_last_name.Substring(0, 1);
-                        CustomerInt.CuName = customerRequest.customer_first_name + " " + customerRequest.customer_last_name;
-                        //CustomerInt.CuAddress = "test"; //customerRequest.customer_address.street;
-                        // CustomerInt.CuCity = "test"; //customerRequest.customer_address.city;
-                        // CustomerInt.CuPhoneNumber[(PhoneType)1] = "0912345678"; //customerRequest.customer_contact_no.mobile;
-                        CustomerInt.CuActive = 1;
-                        error = CustomerInt.ModifyCard(true);
-                        if(error == 0)
+                        var _matchTerm = Regex.Match(_paymentTerm, pattern);
+                        var _matchReceivable = Regex.Match(_receivable, pattern);
+
+                        cardpos = CustomerInt.Key_CuCardPos;
+                        error = CustomerInt.ReserveCard(cardpos);
+
+                        if (error == 0)
                         {
-                            return "Update completed successfully";
+
+                            CustomerInt.CuNumber = CustomerInt.PKey_CuNumber;
+                            CustomerInt.CuSortKey = _customer.customer_last_name; //customerRequest.customer_last_name.Substring(0, 1);
+                            CustomerInt.CuName = _customer.customer_first_name + " " + _customer.customer_last_name;
+                            CustomerInt.CuAddress = _customer.customer_address.street;
+                            CustomerInt.CuCity = _customer.customer_address.city;
+                            CustomerInt.CuPostalCode = _customer.customer_address.zip_code;
+                            CustomerInt.CuEMail[EMailType.EMail_One] = _customer.customer_email;
+                            CustomerInt.CuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
+                            CustomerInt.CuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                            CustomerInt.CuActive = 1;
+                            CustomerInt.CuTermNumber = Convert.ToInt32(_matchTerm.Value);
+                            CustomerInt.CuReceivable = Convert.ToInt32(_matchReceivable.Value);
+
+                            error = CustomerInt.ModifyCard(true);
+                            if (error == 0)
+                            {
+                                return "Update completed successfully";
+                            }
+                            else
+                            {
+                                error = CustomerInt.FreeCard();
+                                if (error != 0)
+                                {
+                                    return "Error: " + Acomba.GetErrorMessage(error);
+                                }
+                                return "Error: " + Acomba.GetErrorMessage(error);
+                            }
                         }
                         else
                         {
-                            error = CustomerInt.FreeCard();
-                            if(error != 0)
-                            {
-                                return "Error: " + Acomba.GetErrorMessage(error);
-                            }
                             return "Error: " + Acomba.GetErrorMessage(error);
                         }
                     }
                     else
                     {
-                        return "Error: " + Acomba.GetErrorMessage(error);
+                        return "Error :" + Acomba.GetErrorMessage(error);
                     }
+                }
+                else if(_customerType == "Supplier")
+                {
+                    var SupplierInt = new AcoSDK.Supplier();
+
+                    SupplierInt.BlankKey();
+                    SupplierInt.PKey_SuNumber = _projectNumber;
+
+                    error = SupplierInt.FindKey(noIndex, false);
+                    if(error == 0)
+                    {
+                        var _matchTerm = Regex.Match(_paymentTerm, pattern);
+                        var _matchReceivable = Regex.Match(_receivable, pattern);
+
+                        cardpos = SupplierInt.Key_SuCardPos;
+                        error = SupplierInt.ReserveCard(cardpos);
+
+                        if(error == 0)
+                        {
+                            SupplierInt.SuNumber = _projectNumber;
+                            SupplierInt.SuSortKey = _customer.customer_last_name;
+                            SupplierInt.SuName = _customer.customer_first_name + " " + _customer.customer_last_name;
+                            SupplierInt.SuAddress = _customer.customer_address.street;
+                            SupplierInt.SuCity = _customer.customer_address.city;
+                            SupplierInt.SuPostalCode = _customer.customer_address.zip_code;
+                            SupplierInt.SuEMail[EMailType.EMail_One] = _customer.customer_email;
+                            SupplierInt.SuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
+                            SupplierInt.SuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                            SupplierInt.SuActive = 1;
+                            //SupplierInt.SuPaymentTermNumber = Convert.ToInt32(_matchTerm.Value);
+                            //SupplierInt.SuPaymentTermNumber = 
+
+                            SupplierInt.ModifyCard(true);
+                            if (error == 0)
+                            {
+                                return "Update completed successfully";
+                            }
+                            else
+                            {
+                                error = CustomerInt.FreeCard();
+                                if (error != 0)
+                                {
+                                    return "Error: " + Acomba.GetErrorMessage(error);
+                                }
+                                return "Error: " + Acomba.GetErrorMessage(error);
+                            }
+                        }
+                        else
+                        {
+                            return "Error: " + Acomba.GetErrorMessage(error);
+                        }
+                    }
+                    else
+                    {
+                        return "Error :" + Acomba.GetErrorMessage(error);
+                    }
+
                 }
                 else
                 {
-                    return "Error :" + Acomba.GetErrorMessage(error);
+                    return "";
                 }
+
             }
             catch(Exception ex)
             {
@@ -266,13 +383,14 @@ namespace acomba.zuper_api.AcombaServices
         public async Task<object> ImportCustomersToZuper()
         {
             int total = 0; // number of customers to import
-            int cardpos = 1; //CardPos of the first customer file to consult
+            int cardpos = 2; //CardPos of the first customer file to consult
             int error;
-            total = CustomerInt.NumCards();
+           
             var customerList = new List<CreateCustomerDto>();
             try
             {
                 _connection.OpenConnection();
+                total = CustomerInt.NumCards();
 
                 error = CustomerInt.GetCards(cardpos, total);
                 if(error == 0 || CustomerInt.CursorUsed > 0)
@@ -283,7 +401,7 @@ namespace acomba.zuper_api.AcombaServices
                         if(CustomerInt.CuStatus == 0)
                         {
                             var customFields = new List<CustomField>();
-                            customFields.Add(new CustomField() { label = "CustomerNumber", value = CustomerInt.CuNumber });
+                            customFields.Add(new CustomField() { label = "Project", value = CustomerInt.CuNumber });
                             var _customer = new CreateCustomerDto()
                             {
                                 customer_email = CustomerInt.CuEMail[EMailType.EMail_One],
@@ -312,7 +430,7 @@ namespace acomba.zuper_api.AcombaServices
                                     zip_code = CustomerInt.CuPostalCode,
 
                                 },
-                                //custom_fields = customFields,
+                                custom_fields = customFields,
                                 customer_category = "7a162a70-b2d3-11ed-b877-4f8e5e43701d"
 
                             };

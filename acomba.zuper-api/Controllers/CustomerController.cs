@@ -50,10 +50,21 @@ namespace acomba.zuper_api.Controllers
         {
             try
             {
-              
-                //save customer data in acomba 
-               var result = await _customerService.AddCustomerWebhook(_cus);
-                return Ok(result);
+                //get customer details before saving to acomba
+                using (var http = new HttpClient())
+                {
+                    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}customers/{_cus.customer}");
+                    HttpResponseMessage response = await http.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    var result = JsonConvert.DeserializeObject<CustomerDetailResponse>(responseBody);
+
+                    var _addCustomer = await _customerService.AddCustomerWebhook(result.Data);
+                    return Ok(_addCustomer);
+                }
+
+               
             }
             catch(Exception ex)
             {
@@ -66,11 +77,22 @@ namespace acomba.zuper_api.Controllers
         {
             try
             {
-                
-                    //update customer in acomba
-                    var result = await _customerService.UpdateCustomer(_cus);
-                    return Ok(result);
-              
+
+               
+                //get customer details before updating to acomba
+                using (var http = new HttpClient())
+                {
+                    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}customers/{_cus.customer}");
+                    HttpResponseMessage response = await http.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    var result = JsonConvert.DeserializeObject<CustomerDetailResponse>(responseBody);
+
+                    var updateCustomer = await _customerService.UpdateCustomer(result.Data);
+                    return Ok(updateCustomer);
+                }
+
             }
             catch(Exception ex)
             {
