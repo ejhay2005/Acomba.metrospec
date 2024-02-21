@@ -130,7 +130,7 @@ namespace acomba.zuper_api.AcombaServices
                 employeeInt.EmName = employee.last_name;
                 employeeInt.EmFirstName = employee.first_name;
                 employeeInt.EmSortKey = employee.last_name;
-                employeeInt.EmSIN = "000000000";
+                employeeInt.EmSIN = SIN;
                 employeeInt.EmGender = GetGenderType(_gender);
                 employeeInt.EmMaritalStatus =GetMaritalStatus(_marital);
                 employeeInt.EmBirthdate = _birth;
@@ -190,7 +190,7 @@ namespace acomba.zuper_api.AcombaServices
                 employeeInt.Fn_Conditions_OnOff[1, PA_ConditionType.PA_Cond_UnionDues] = -1;
 
                 //Earnings
-                employeeInt.set_Fn_Line_Amount(1, 102, _101);
+                employeeInt.set_Fn_Line_Amount(1, 101, _101);
                 employeeInt.set_Fn_Line_Amount(1, 102, _102);
                 employeeInt.set_Fn_Line_Amount(1, 103, _103);
                 employeeInt.set_Fn_Line_Amount(1, 104, _104);

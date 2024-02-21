@@ -1,7 +1,10 @@
 ﻿using acomba.zuper_api.Dto;
 using AcoSDK;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -14,12 +17,13 @@ namespace acomba.zuper_api.AcombaServices
         Task<object> GetProduct(string _productId);
         Task<List<string>> ImportProducts(List<ProductDto1> products);
         Task<object> ImportProductsToZuper();
+        Task<object> GetAllProduct(int cardpos, int niche, int activateNumcard);
     }
     public class ProductService : IProductService
     {
         private readonly IConfiguration _configuration;
         private readonly IAcombaConnection _connection;
-        private AcoSDK.Product productInt = new AcoSDK.Product();
+        private AcoSDK.Product003 productInt = new AcoSDK.Product003();
         private AcoSDK.AcombaX Acomba = new AcoSDK.AcombaX();
         public ProductService(IConfiguration configuration, IAcombaConnection acombaConnection)
         {
@@ -46,7 +50,7 @@ namespace acomba.zuper_api.AcombaServices
                 {
                     
 
-                    var _insert = InsertProduct(product.product_id, product.meta_data[1].value, product.product_name, product.quantity.Value, product.price.Value ,product.meta_data[2].value);
+                    var _insert = InsertProduct(product);
                     if (_insert == 0)
                     {
                         _connection.CloseConnection();
@@ -58,19 +62,20 @@ namespace acomba.zuper_api.AcombaServices
                         error = productInt.FreeCardNumber();
                         _connection.CloseConnection();
 
-                        return "Error:" + Acomba.GetErrorMessage(error);
+                        return "Error:" + Acomba.GetErrorMessage(error) + "Inserting Product failed.";
                     }
                 }
                 else
                 {
                     error = productInt.FreeCardNumber();
                     _connection.CloseConnection();
-                    return "Error:" + Acomba.GetErrorMessage(error);
+                    return "Error:" + Acomba.GetErrorMessage(error) + "Reserve number error";
                 }
             }
             catch (Exception ex)
             {
 
+               var error = productInt.FreeCardNumber();
                 _connection.CloseConnection();
                 return ex.Message;
             }
@@ -79,35 +84,32 @@ namespace acomba.zuper_api.AcombaServices
 
         }
 
-        private int InsertProduct(string productNumber, string productGroupNumber, string desc, int? qty,double? price,string upc)
+        private int InsertProduct(ProductDto product)
         {
+            var _productGroup = !product.meta_data.Where(i => i.label == "Product Group").Any() ? "0" : product.meta_data.Where(i => i.label == "Product Group").FirstOrDefault().value; 
+            //var _productSupplier = !product.meta_data.Where(i => i.label == "Supplier Product").Any() ? string.Empty : product.meta_data.Where(i => i.label == "Supplier Product").FirstOrDefault().value;
+            var _productUpc = !product.meta_data.Where(i => i.label == "UPC").Any() ? string.Empty : product.meta_data.Where(i => i.label == "UPC").FirstOrDefault().value;
+            var _productUnitCode = !product.meta_data.Where(i => i.label == "Unit Code").Any() ? string.Empty : product.meta_data.Where(i => i.label == "Unit Code").FirstOrDefault().value;
+            string pattern = @"\d+";
 
-            productInt.PrNumber = productNumber;
+            var _matchgroup = Regex.Match(_productGroup, pattern);
+
+            productInt.PrNumber = product.product_id;
             productInt.PrActive = 1;
-            if(price != null || price != 0)
-            {
-                productInt.PrSellingPrice[0,1] = price.Value;
-            }
-            
-            if (!string.IsNullOrEmpty(upc))
-            {
-                productInt.Key_PrUPC = upc;
-            }
-            if (!string.IsNullOrEmpty(productGroupNumber))
-            {
-                productInt.PrProductGroupCP = GetProductGroupCardPos(Convert.ToInt32(productGroupNumber));
-            }
-            if (!string.IsNullOrEmpty(desc))
-            {
-                productInt.PrDescription[1] = desc;
-            }
-            if(qty != null || qty != 0)
-            {
-                productInt.PrMaximumQty = qty.Value;
-                
-            }
-           
 
+            productInt.PrSellingPrice[0, 1] = product.price == null ? 0 : product.price.Value;
+            productInt.PrLocation = "WAREHOUSE";
+            productInt.PrProductGroupCP = GetProductGroupCardPos(Convert.ToInt32(_matchgroup.Value));
+            productInt.PrSellingPrice[0,1] = product.price.Value;
+            productInt.PrDescription[1] = product.product_description;
+            productInt.PrTotalOnHand = product.quantity.Value;
+            productInt.PrAvailableQty = product.quantity.Value;
+            productInt.PrQtyOnHand = product.quantity.Value;
+            productInt.PrTotalAvailableQty = product.quantity.Value;
+            //productInt.PrProductSuppliersCP[1] = GetProductSupplierCardPos(_productSupplier);
+            productInt.PrUPC = _productUpc;
+            productInt.PrLongUnitCode = _productUnitCode;
+           
             var error = productInt.AddCard();
 
             return error;
@@ -130,6 +132,28 @@ namespace acomba.zuper_api.AcombaServices
                 return 0;
             }
         }
+        private int GetProductSupplierCardPos(string supplier)
+        {
+            var productSupplier = new AcoSDK.ProductSupplier();
+            int error;
+            int noOfIndex = 1;
+            productSupplier.PKey_PSCatalogNumber = supplier;
+           
+            error = productSupplier.FindKey(noOfIndex, false);
+            if(error == 0)
+            {
+                return productSupplier.Key_PSCardPos;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        //private async Task AddProductSupplier()
+        //{
+        //    AcoSDK.Supplier _supplier = new AcoSDK.Supplier();
+
+        //}
         #endregion
         #region Update Product 
         public async Task<string> UpdateProduct(ProductDto product)
@@ -270,7 +294,12 @@ namespace acomba.zuper_api.AcombaServices
                         var gpNumber = p.meta_data.Count() == 0 ? string.Empty : p.meta_data.Where(i => i.label == "Group").FirstOrDefault().value.ToString();
                         var upc = p.meta_data.Count() == 0 ? string.Empty : p.meta_data.Where(i => i.label== "Upc").FirstOrDefault().value.ToString();
                         var qty = p.quantity == 0 ? 1 : p.quantity;
-                        var _insert = InsertProduct(p.product_id, gpNumber, p.product_name, qty, p.price, upc);
+
+                        var _product = new ProductDto()
+                        {
+
+                        };
+                        var _insert = InsertProduct(_product);
                         if (_insert == 0)
                         {
                             string res = "Product: " + p.product_id + " successfully added.";
@@ -310,15 +339,19 @@ namespace acomba.zuper_api.AcombaServices
         {
             try
             {
-                int count = 1000; // number of products to import
-                int cardpos = 1; //CardPos of the first customer file to consult
+                _connection.OpenConnection();
+
+                int total = 0; // number of products to import
+                int cardpos = 2; //CardPos of the first product file to consult
                 int error;
+                total = productInt.NumCards();
+                //int error;
                 var customFields = new List<CustomField>();
                 var productList = new List<ProductDto>();
 
-                _connection.OpenConnection();
+                
 
-                error = productInt.GetCards(cardpos, count);
+                error = productInt.GetCards(cardpos, 200);
                 if(error == 0 || productInt.CursorUsed > 0)
                 {
                     for (int i = 0; i < productInt.CursorUsed; i++)
@@ -327,15 +360,31 @@ namespace acomba.zuper_api.AcombaServices
                         if (productInt.PrStatus == 0)
                         {
 
+                            var _custom = new List<meta_data>
+                            {
+                                new meta_data { label = "Group", value = productInt.PrProductGroupNumber.ToString() + " - " + GetProductGroupDetail(productInt.PrProductGroupNumber)},
+                                new meta_data { label = "UPC", value = productInt.PrUPC},
+                                new meta_data { label = "Location", value = "WAREHOUSE"},
+                                new meta_data { label = "Unit Code", value = productInt.PrLongUnitCode}
+                            };
+
                             var product = new ProductDto()
                             {
-                                product_type = GetProductGroupDesc(productInt.PrProductGroupNumber),
+                                product_type = "PRODUCT",
                                 product_id = productInt.PrNumber,
-                                product_name = productInt.PrDescription[1],
+                                product_name = productInt.PrNumber,
+                                product_description = string.IsNullOrEmpty(productInt.PrDescription[1]) ? string.Empty : productInt.PrDescription[1],
+                                product_category = "781ddce0-b2d3-11ed-a148-6bb858e65421", //"784f2610-b2d3-11ed-884d-312422fc19c0", //default Product
+                                is_available = true,
                                 price = productInt.PrSellingPrice[0, 1],
-                                track_quantity = true,
+                                track_quantity = false,
+                                currency = "CAD",
                                 quantity = Convert.ToInt32(productInt.PrQtyOnHand),
-                                min_quantity = Convert.ToInt32(productInt.PrMaximumQty)
+                                min_quantity = 0,
+                                meta_data = _custom,
+                                has_custom_tax = false,
+                                tax = new { tax_exempt = false },
+                                location_availability = new List<Location>() { new Location() { location = "597cdec0-b2d4-11ed-a148-6bb858e65421",quantity = Convert.ToInt32(productInt.PrQtyOnHand), min_quantity = 2} }
                             };
                             productList.Add(product);
 
@@ -349,10 +398,10 @@ namespace acomba.zuper_api.AcombaServices
             catch(Exception ex)
             {
                 _connection.CloseConnection();
-                return ex.Message;
+                return ex.Message.ToString();
             }
         }
-        private string GetProductGroupDesc(int id)
+        private string GetProductGroupDetail(int id)
         {
             var productGroupInt = new AcoSDK.ProductGroup();
             int error,cardpos;
@@ -386,10 +435,15 @@ namespace acomba.zuper_api.AcombaServices
 
             foreach (var e in _products)
             {
+                var _reqBody = new Dto.Product()
+                {
+                    product = e
+                };
+
                 var _http = new HttpClient();
                 _http.DefaultRequestHeaders.Add("Accept", "application/json");
                 _http.DefaultRequestHeaders.Add("x-api-key", _configuration["MetricApiKey"]);
-                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/product", e);
+                var response = await _http.PostAsJsonAsync($"{_configuration["ZuperUrl"]}/product", _reqBody);
                 var responseBody = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<ResponseResult>(responseBody);
                 results.Add(result);
@@ -398,8 +452,86 @@ namespace acomba.zuper_api.AcombaServices
             return results;
         }
         #endregion
+        #region GetAllProduct
+
+        #endregion
+        public async Task<object> GetAllProduct(int cardpos, int niche,int activateNumcard)
+        {
+            var results = new List<object>();
+            try
+            {
+               
+               
+                //int error;
+
+                _connection.OpenConnection();
+
+                int total = 0; // number of products to import
+                // int cardpos = 8; //CardPos of the first product file to consult
+                var totalProduct = productInt.NumCards();
+                int error;
+                if (activateNumcard == 1)
+                {
+                    total = totalProduct;
+                }
+                else
+                {
+                    total = niche;
+                }
+
+                error = productInt.GetCards(cardpos, total);
+                if (error == 0 || productInt.CursorUsed > 0)
+                {
+                    for (int i = 0; i < productInt.CursorUsed; i++)
+                    {
+                        productInt.Cursor = i;
+                        if (productInt.PrStatus == 0)
+                        {
+
+                            var _custom = new List<CustomField>
+                            {
+                                new CustomField { label = "Group", value = productInt.PrProductGroupNumber.ToString() + " - " + GetProductGroupDetail(productInt.PrProductGroupNumber)},
+                                new CustomField { label = "UPC", value = productInt.PrUPC},
+                                new CustomField { label = "Location", value = "WAREHOUSE"},
+                                new CustomField { label = "Unit Code", value = productInt.PrLongUnitCode}
+                            };
+
+                            var _prod = new 
+                            {
+                                product_type = "PRODUCT",
+                                product_id = productInt.PrNumber,
+                                product_name = productInt.PrNumber,
+                                product_description = string.IsNullOrEmpty(productInt.PrDescription[1]) ? "" : productInt.PrDescription[1],
+                                product_category = "781ddce0-b2d3-11ed-a148-6bb858e65421", //"784f2610-b2d3-11ed-884d-312422fc19c0", //default Product
+                                is_available = true,
+                                price = productInt.PrSellingPrice[0, 1],
+                                purchase_price = 0,
+                                track_quantity = false,
+                                quantity = Convert.ToInt32(productInt.PrQtyOnHand),
+                                min_quantity = 0,
+                                has_custom_tax = false,
+                                location = productInt.PrLocation,
+                                product_group = productInt.PrProductGroupNumber,
+                                upc = productInt.PrUPC,
+                                supplier = productInt.Key_PrSupplierNumber,
+                                meta_data = _custom
+                            };
+                            results.Add(_prod);
+
+                        }
+                    }
+                }
+                _connection.CloseConnection();
+                return results.Take(1000);
+            }
+            catch(Exception ex)
+            {
+                return ex.Message;
+            }
+        }
     }
 }
+
 //try
 //{
 //    _connection.OpenConnection();

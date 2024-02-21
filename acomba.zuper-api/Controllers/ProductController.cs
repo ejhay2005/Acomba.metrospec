@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace acomba.zuper_api.Controllers
 {
-    //[ServiceFilter(typeof(ApiKeyAuthFilter))]
+    [ServiceFilter(typeof(ApiKeyAuthFilter))]
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : ControllerBase
@@ -109,10 +109,16 @@ namespace acomba.zuper_api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpGet("import-product-zuper")]
+        [HttpGet("import-product-to-zuper")]
         public async Task<ActionResult> ImportEmployeesToZuper()
         {
             var result = await _productService.ImportProductsToZuper();
+            return Ok(result);
+        }
+        [HttpGet("acomba-products")]
+        public async Task<ActionResult> GetAcombaProducts(int cardpos, int niche, int activateNumcard)
+        {
+            var result = await _productService.GetAllProduct( cardpos, niche, activateNumcard);
             return Ok(result);
         }
     }

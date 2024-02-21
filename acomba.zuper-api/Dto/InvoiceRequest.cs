@@ -26,11 +26,12 @@
         public string? estimate { get; set; }
         public List<LineItemDetails>? line_items { get; set; }
         public double? sub_total { get; set; }
+        public double? total { get; set; }
         public List<Attachment>? attachments { get; set; }
         public List<NoteDetail>? notes { get; set; }
         public DiscountDetail? discount { get; set; }
         public List<TaxDetail>? tax { get; set; }
-        public List<CustomField>? custom_fields { get; set; }
+        public List<CustomFieldWebhook>? custom_fields { get; set; }
     }
 
     public class LineItemDetails
@@ -48,7 +49,7 @@
         public string? discount_type { get; set; }
         public string? location_uid { get; set; }
         public string? location_name { get; set; }
-        public int? total { get; set; }
+        public double total { get; set; }
     }
     public class Attachment
     {
@@ -63,8 +64,10 @@
     public class DiscountDetail
     {
         public string? type { get; set; }
+        public string? discount_label { get; set; }
+        public string? discount_applicability { get; set; }
         public int? percent { get; set; }
-        public int? value { get; set; }
+        public string? value { get; set; }
     }
     public class TaxDetail
     {
