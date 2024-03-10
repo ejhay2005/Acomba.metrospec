@@ -65,9 +65,19 @@ namespace acomba.zuper_api.Controllers
         {
             try
             {
-                _invoiceList.Add(invoiceRequest);
-                var result = await _invoiceService.AddInvoiceWebhook(invoiceRequest);
-                return Ok(result);
+                using (var http = new HttpClient())
+                {
+                    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}customers/{invoiceRequest.invoice.customer}");
+                    HttpResponseMessage response = await http.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    var _customer = JsonConvert.DeserializeObject<CustomerDetailResponse>(responseBody);
+
+                    var result = await _invoiceService.AddInvoiceWebhook(invoiceRequest,_customer.Data);
+                    return Ok(result);
+                }
+                 
             }
             catch (Exception ex)
             {
@@ -75,11 +85,61 @@ namespace acomba.zuper_api.Controllers
             }
 
         }
-        [HttpGet("get-added-invoice")]
-        public async Task<IActionResult> GetAddedInvoice()
+        [HttpPost("invoice-payment")]
+        public async Task<IActionResult> InvoicePayment(InvoicePayment _payment)
         {
+            var customerData = new CustomerDetailResponse();
+           
+            using (var http = new HttpClient())
+            {
+
+                http.DefaultRequestHeaders.Add("Accept", "application/json");
+                http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}invoice/{_payment.invoice_uid}");
+                HttpResponseMessage response = await http.SendAsync(request);
+                dynamic invoiceData = JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
+
+               
+                HttpRequestMessage customerRequest = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}customers/{invoiceData.data.customer.customer_uid}");
+                HttpResponseMessage customerResponse = await http.SendAsync(customerRequest);
+                var responseCustomerBody = customerResponse.Content.ReadAsStringAsync().Result;
+                customerData = JsonConvert.DeserializeObject<CustomerDetailResponse>(responseCustomerBody);
+
+                var result = await _invoiceService.CustomerPayment(_payment, customerData.Data);
+                return Ok(result);
+            }
+
             
-            return Ok(_invoiceList);
+        }
+        [HttpGet("get-acomba-invoice")]
+        public async Task<IActionResult> GetAcombaInvoice(string invoiceId)
+        {
+            try
+            {
+                var _get = await _invoiceService.GetInvoice(invoiceId);
+
+                return Ok(_get);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+        [HttpGet("get-acomba-invoices")]
+        public async Task<IActionResult> GetAcombaInvoices()
+        {
+            try
+            {
+                var _get = await _invoiceService.GetInvoices();
+
+                return Ok(_get);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+           
         }
     }
 }

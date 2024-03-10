@@ -13,6 +13,7 @@
     public class InvoiceDto
     {
         public string invoice_uid { get; set; }
+        public string? description { get; set; }
         public DateTime invoice_date { get; set; }
         public DateTime due_date { get; set; }
         public Customer customer { get; set; }

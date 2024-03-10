@@ -8,9 +8,9 @@ namespace acomba.zuper_api.Dto
     }
     public class Accounts
     {
-        public int? ltv { get; set; }
-        public int? receivables { get; set; }
-        public int? credits { get; set; }
+        public double? ltv { get; set; }
+        public double? receivables { get; set; }
+        public double? credits { get; set; }
     }
 
     public class CustomerAddress
@@ -55,7 +55,7 @@ namespace acomba.zuper_api.Dto
     {
         public string? mobile { get; set; }
         public string? work { get; set; }
-        public string? phone { get; set; }
+        public string? home { get; set; }
         public string? _id { get; set; }
     }
 
