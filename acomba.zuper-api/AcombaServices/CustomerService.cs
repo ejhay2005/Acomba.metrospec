@@ -392,7 +392,7 @@ namespace acomba.zuper_api.AcombaServices
                 _connection.OpenConnection();
                 total = CustomerInt.NumCards();
 
-                error = CustomerInt.GetCards(cardpos, 100);
+                error = CustomerInt.GetCards(cardpos, total);
                 if(error == 0 || CustomerInt.CursorUsed > 0)
                 {
                     for(int i = 0; i < CustomerInt.CursorUsed; i++)

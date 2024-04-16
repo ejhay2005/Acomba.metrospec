@@ -2,7 +2,7 @@
 {
     public class InvoiceResponse : ResponseData
     {
-        public List<InvoiceDto> data { get; set;}
+        public InvoiceDto data { get; set;}
     }
     
     public class Financing
@@ -19,10 +19,10 @@
         public Customer customer { get; set; }
         public object organization { get; set; }
         public string prefix { get; set; }
-        public int total { get; set; }
+        public double total { get; set; }
         public List<object> tags { get; set; }
         public string invoice_status { get; set; }
-        public List<object> custom_fields { get; set; }
+        public List<CustomFieldWebhook> custom_fields { get; set; }
         public ServiceContract service_contract { get; set; }
         public bool is_paid { get; set; }
         public bool is_deleted { get; set; }
@@ -33,6 +33,8 @@
         public DateTime updated_at { get; set; }
         public int invoice_no { get; set; }
         public string id { get; set; }
+        public PaymentMode? payment_mode { get; set; }
+        public List<LineItemDetails>? line_items { get; set; }
     }
 
     public class ServiceContract
@@ -45,5 +47,13 @@
         public DateTime end_date { get; set; }
         public bool is_deleted { get; set; }
         public int contract_number { get; set; }
+    }
+    public class PaymentMode
+    {
+        public string payment_mode_uid { get; set; }
+        public string payment_mode_name { get; set; }
+        public string payment_mode_type { get; set; }
+
+        public string payment_mode_description { get; set; }
     }
 }

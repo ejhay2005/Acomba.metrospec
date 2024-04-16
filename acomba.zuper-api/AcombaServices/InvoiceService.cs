@@ -12,10 +12,10 @@ namespace acomba.zuper_api.AcombaServices
     public interface IinvoiceService
     {
         Task<string> AddInvoice(InvoiceRequest invoiceRequest);
-        Task<string> AddInvoiceWebhook(InvoiceRequest invoiceRequest,CustomerDto _customer);
+        Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest,CustomerDto _customer);
         Task<object> GetInvoice(string invoiceId);
         Task<object> GetInvoices();
-        Task<string> CustomerPayment(InvoicePayment _payment, CustomerDto _customer);
+        Task<string> CustomerPayment(InvoicePayment _payment, CustomerDto _customer, string paymentMode);
     }
     public class InvoiceService : IinvoiceService
     {
@@ -37,7 +37,7 @@ namespace acomba.zuper_api.AcombaServices
 
         #region Add Invoice
 
-        public async Task<string> AddInvoiceWebhook(InvoiceRequest invoiceRequest, CustomerDto _customer)
+        public async Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest, CustomerDto _customer)
         {
             try
             {
@@ -155,7 +155,7 @@ namespace acomba.zuper_api.AcombaServices
                             }
                             else
                             {
-                                return "Error in tax :" + Acomba.GetErrorMessage(error);
+                                return new ResultDto { Message = "Error in tax :" + Acomba.GetErrorMessage(error) };
                             }
                         }
                         if (_tvq != 0)
@@ -178,35 +178,36 @@ namespace acomba.zuper_api.AcombaServices
                             }
                             else
                             {
-                                return "Error in tax :" + Acomba.GetErrorMessage(error);
+                                return new ResultDto { Message = "Error in tax :" + Acomba.GetErrorMessage(error) };
                             }
                         }
-
+                       
                         error = _transactionInt.AddCard();
                         if (error == 0)
                         {
-                            return "Adding invoice completed successfully";
+                            return new ResultDto { Message = "Adding invoice completed successfully", InvoiceID = _transactionInt.InInvoiceNumber };
+                            //return "Adding invoice completed successfully";
                         }
                         else
                         {
-                            return "Error in adding invoice :" + Acomba.GetErrorMessage(error);
+                            return new ResultDto { Message = "Error in adding invoice :" + Acomba.GetErrorMessage(error) };
                         }
                     }
                     else
                     {
-                        return $"Error in Customer Supplies:{customerNumber}" + Acomba.GetErrorMessage(error);
+                        return new ResultDto { Message = $"Error in Customer Supplies:{customerNumber}" + Acomba.GetErrorMessage(error) };
                     }
 
                 }
                 else
                 {
-                    return "Error Customer not found:" + Acomba.GetErrorMessage(error);
+                    return new ResultDto { Message = "Error Customer not found:" + Acomba.GetErrorMessage(error) };
                 }
 
             }
             catch (Exception ex)
             {
-                return "Error :" + ex.InnerException.Message == null ? ex.Message : ex.InnerException.Message;
+                return new ResultDto { Message = "Error :" + ex.InnerException.Message == null ? ex.Message : ex.InnerException.Message };
             }
         }
 
@@ -391,7 +392,7 @@ namespace acomba.zuper_api.AcombaServices
         }
         #endregion
         #region Customer Payment
-        public async Task<string> CustomerPayment(InvoicePayment _payment, CustomerDto _customer)
+        public async Task<string> CustomerPayment(InvoicePayment _payment, CustomerDto _customer, string paymentMode)
         {
             try
             {
@@ -474,7 +475,7 @@ namespace acomba.zuper_api.AcombaServices
                         
                         if(error != 0)
                         {
-                            customerPaymentInt.CPPaymentMode[1] = PaymentARMode.PAR_Check;
+                            customerPaymentInt.CPPaymentMode[1] = GetPaymentARMode(paymentMode);
                             customerPaymentInt.CPReceivedAmount[1] = paymentsList.Sum();
 
                             error = customerPaymentInt.ModifyCard(false);
@@ -543,6 +544,20 @@ namespace acomba.zuper_api.AcombaServices
                throw new Exception("Error InvoiceAR not found:" + Acomba.GetErrorMessage(error));
             }
             return pay;
+        }
+        private PaymentARMode GetPaymentARMode(string mode)
+        {
+            switch(mode)
+            {
+                case "Cash":
+                    return PaymentARMode.PAR_Cash;
+                case "Check":
+                    return PaymentARMode.PAR_Check;
+                case "Card":
+                    return PaymentARMode.PAR_Card1; ;
+                default:
+                    return PaymentARMode.PAR_Cash; ;
+            }
         }
         #endregion
         #region Add Invoice Complete
