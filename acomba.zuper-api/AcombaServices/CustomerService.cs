@@ -73,7 +73,7 @@ namespace acomba.zuper_api.AcombaServices
                         CustomerInt.CuPostalCode = _customer.customer_address.zip_code;
                         CustomerInt.CuEMail[EMailType.EMail_One] = _customer.customer_email;
                         CustomerInt.CuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country)? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
-                        CustomerInt.CuPhoneNumber[PhoneType.Ph_Min] = _customer.customer_contact_no.phone;
+                        CustomerInt.CuPhoneNumber[PhoneType.Ph_Number] = _customer.customer_contact_no.home;
                         CustomerInt.CuActive = 1;
                         CustomerInt.CuTermNumber = Convert.ToInt32(_matchTerm.Value);
                         CustomerInt.CuReceivable = Convert.ToInt32(_matchReceivable.Value);
@@ -129,7 +129,7 @@ namespace acomba.zuper_api.AcombaServices
                         SupplierInt.SuPostalCode = _customer.customer_address.zip_code;
                         SupplierInt.SuEMail[EMailType.EMail_One] = _customer.customer_email;
                         SupplierInt.SuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
-                        SupplierInt.SuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                        SupplierInt.SuPhoneNumber[PhoneType.Ph_Number] = _customer.customer_contact_no.home;
                         SupplierInt.SuActive = 1;
                         //SupplierInt.SuPaymentTermNumber = Convert.ToInt32(_matchTerm.Value);
                         //SupplierInt.SuPaymentTermNumber = 
@@ -219,7 +219,7 @@ namespace acomba.zuper_api.AcombaServices
                             CustomerInt.CuPostalCode = _customer.customer_address.zip_code;
                             CustomerInt.CuEMail[EMailType.EMail_One] = _customer.customer_email;
                             CustomerInt.CuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
-                            CustomerInt.CuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                            CustomerInt.CuPhoneNumber[PhoneType.Ph_Number] = _customer.customer_contact_no.home;
                             CustomerInt.CuActive = 1;
                             CustomerInt.CuTermNumber = Convert.ToInt32(_matchTerm.Value);
                             CustomerInt.CuReceivable = Convert.ToInt32(_matchReceivable.Value);
@@ -275,7 +275,7 @@ namespace acomba.zuper_api.AcombaServices
                             SupplierInt.SuPostalCode = _customer.customer_address.zip_code;
                             SupplierInt.SuEMail[EMailType.EMail_One] = _customer.customer_email;
                             SupplierInt.SuISOCountryCode = string.IsNullOrEmpty(_customer.customer_address.country) ? string.Empty : _countryHelper.GetCountryCode(_customer.customer_address.country);
-                            SupplierInt.SuPhoneNumber[PhoneType.Ph_User1] = _customer.customer_contact_no.phone;
+                            SupplierInt.SuPhoneNumber[PhoneType.Ph_Number] = _customer.customer_contact_no.home;
                             SupplierInt.SuActive = 1;
                             //SupplierInt.SuPaymentTermNumber = Convert.ToInt32(_matchTerm.Value);
                             //SupplierInt.SuPaymentTermNumber = 
@@ -332,7 +332,7 @@ namespace acomba.zuper_api.AcombaServices
                     CustomerInt.BlankCard();
                     CustomerInt.BlankKey();
                     //set customer primary key
-                    CustomerInt.PKey_CuNumber = c.customer_contact_no.phone;
+                    CustomerInt.PKey_CuNumber = c.customer_contact_no.home;
 
                     //reserve primary key to add
                     error = CustomerInt.ReserveCardNumber();
@@ -351,14 +351,14 @@ namespace acomba.zuper_api.AcombaServices
                         if (error == 0)
                         {
 
-                            string res = "Customer Id :" + c.customer_contact_no.phone + " successfully added.";
+                            string res = "Customer Id :" + c.customer_contact_no.home + " successfully added.";
                             results.Add(res);
                         }
                         else
                         {
                             error = CustomerInt.FreeCardNumber();
                            
-                            string res = "Customer Id :" + c.customer_contact_no.phone + "insert failed. Error :" + Acomba.GetErrorMessage(error);
+                            string res = "Customer Id :" + c.customer_contact_no.home + "insert failed. Error :" + Acomba.GetErrorMessage(error);
                             results.Add(res);
 
                         }
@@ -366,7 +366,7 @@ namespace acomba.zuper_api.AcombaServices
                     }
                     else
                     {
-                        string res = "Customer Id :" + c.customer_contact_no.phone + "insert failed. Error :" + Acomba.GetErrorMessage(error);
+                        string res = "Customer Id :" + c.customer_contact_no.home + "insert failed. Error :" + Acomba.GetErrorMessage(error);
                         results.Add(res);
                     }
                 }
@@ -398,10 +398,44 @@ namespace acomba.zuper_api.AcombaServices
                     for(int i = 0; i < CustomerInt.CursorUsed; i++)
                     {
                         CustomerInt.Cursor = i;
-                        if(CustomerInt.CuStatus == 0)
+                        if (CustomerInt.CuStatus == 0 )
                         {
                             var customFields = new List<CustomField>();
-                            customFields.Add(new CustomField() { label = "Project", value = CustomerInt.CuNumber });
+                            customFields.Add(new CustomField() 
+                            { label = "Project",
+                              value = CustomerInt.CuNumber,
+                              type = "SINGLE_LINE",
+                              hide_field = false,
+                              hide_to_fe = false,
+                              read_only = false
+                            });
+                            customFields.Add(new CustomField()
+                            {
+                                label = "Customer Type",
+                                value = "Regular",
+                                type = "SINGLE_ITEM",
+                                hide_field = false,
+                                hide_to_fe = false,
+                                read_only = false
+                            });
+                            customFields.Add(new CustomField()
+                            {
+                                label = "Payment Term",
+                                value = CustomerInt.CuTermNumber + " - " + PaymentTermCardpos(CustomerInt.CuTermNumber),
+                                type = "SINGLE_LINE",
+                                hide_field = false,
+                                hide_to_fe = false,
+                                read_only = false
+                            });
+                            customFields.Add(new CustomField()
+                            {
+                                label = "Receivable",
+                                value = "0 - New TD 004-4440-5299025",
+                                type = "SINGLE_LINE",
+                                hide_field = false,
+                                hide_to_fe = false,
+                                read_only = false
+                            });
                             var _customer = new CreateCustomerDto()
                             {
                                 customer_email = CustomerInt.CuEMail[EMailType.EMail_One],
@@ -410,7 +444,7 @@ namespace acomba.zuper_api.AcombaServices
                                 customer_company_name = CustomerInt.CuName,
                                 customer_contact_no = new CustomerContactNo()
                                 {
-                                    phone = CustomerInt.CuPhoneNumber[PhoneType.Ph_Number],
+                                    home = CustomerInt.CuPhoneNumber[PhoneType.Ph_Number],
                                     work = CustomerInt.CuPhoneNumber[PhoneType.Ph_User1],
                                     mobile = CustomerInt.CuPhoneNumber[PhoneType.Ph_User2]
                                 },
@@ -431,11 +465,13 @@ namespace acomba.zuper_api.AcombaServices
 
                                 },
                                 custom_fields = customFields,
-                                customer_category = "7a162a70-b2d3-11ed-b877-4f8e5e43701d"
-
+                                customer_category = "7a162a70-b2d3-11ed-b877-4f8e5e43701d",
+                                is_active = Convert.ToBoolean(CustomerInt.CuActive)
+                                
                             };
 
                             customerList.Add(_customer);
+                           
                         }
                     }
                    
@@ -451,6 +487,31 @@ namespace acomba.zuper_api.AcombaServices
             }
            
            
+        }
+        //getting payment term detail 
+        private string PaymentTermCardpos(int term)
+        {
+            AcoSDK.CustomerTerm ct = new AcoSDK.CustomerTerm();
+            ct.PKey_CTNumber = term;
+            var error = ct.FindKey(1, false);
+            if(error == 0)
+            {
+                Console.WriteLine(ct.Key_CTDescription);
+                var cardPos = ct.Key_CTCardPos;
+                error = ct.GetCard(cardPos);
+                if(error == 0)
+                {
+                    return ct.CTDescription;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            else
+            {
+                return "";
+            }
         }
         private async Task<List<ResponseResult>> ImportToZuper(List<CreateCustomerDto> _customers)
         {

@@ -72,5 +72,9 @@
     public class TaxDetail
     {
         public string? tax_uid { get; set; }
+        public string? tax_name { get; set; }
+        public double? tax_percent { get; set; }
+        public string? tax_id { get; set; }
+        public double? tax_amount { get; set; }
     }
 }
