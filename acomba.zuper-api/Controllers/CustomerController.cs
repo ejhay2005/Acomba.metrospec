@@ -130,7 +130,12 @@ namespace acomba.zuper_api.Controllers
             var result = await _customerService.ImportCustomersToZuper();
             return Ok(result);
         }
-        
+        [HttpPost("get-acomba-customers")]
+        public async Task<IActionResult> GetAcombaCustomers(int cardpos, int niche, int activateNumcard)
+        {
+            var result = await _customerService.GetAcombaCustomers(cardpos,niche,activateNumcard);
+            return Ok(result);
+        }
         [HttpGet("test-sdk")]
         public async Task<IActionResult> TestSdk()
         {

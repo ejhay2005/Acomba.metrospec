@@ -41,12 +41,12 @@
 
     
 
-    public class PaymentTerm
-    {
-        public string payment_term_uid { get; set; }
-        public string payment_term_name { get; set; }
-        public int no_of_days { get; set; }
-    }
+    //public class PaymentTerm
+    //{
+    //    public string payment_term_uid { get; set; }
+    //    public string payment_term_name { get; set; }
+    //    public int no_of_days { get; set; }
+    //}
 
     public class ServiceContractDto
     {

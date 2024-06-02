@@ -11,6 +11,9 @@ namespace acomba.zuper_api.Dto
         public double? ltv { get; set; }
         public double? receivables { get; set; }
         public double? credits { get; set; }
+        public Tax? tax { get; set; }
+        public PaymentTerm? payment_term { get; set; }
+        public TaxGroup? tax_group { get; set; }
     }
 
     public class CustomerAddress
@@ -158,5 +161,20 @@ namespace acomba.zuper_api.Dto
     public class Root
     {
         public CreateCustomerDto customer { get; set; }
+    }
+    public class Tax
+    {
+        public bool tax_exempt { get; set; }
+    }
+    public class PaymentTerm
+    {
+        public string payment_term_uid { get; set; }
+        public string payment_term_name { get; set; }
+        public int no_of_days { get; set; }
+    }
+    public class TaxGroup
+    {
+        public string? tax_group_uid { get; set; }
+        public string? tax_group_name { get; set; }
     }
 }

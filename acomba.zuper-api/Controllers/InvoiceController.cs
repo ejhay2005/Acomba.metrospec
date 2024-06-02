@@ -72,6 +72,16 @@ namespace acomba.zuper_api.Controllers
            
             try
             {
+                using (var httpInvoice = new HttpClient())
+                {
+                    httpInvoice.DefaultRequestHeaders.Add("Accept", "application/json");
+                    httpInvoice.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}invoice/{invoiceRequest.invoice_uid}");
+                    HttpResponseMessage response = await httpInvoice.SendAsync(request);
+                    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    invoiceResponse = JsonConvert.DeserializeObject<InvoiceResponse>(responseBody);
+
+                }
                 using (var http = new HttpClient())
                 {
                     http.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -81,22 +91,22 @@ namespace acomba.zuper_api.Controllers
                     var responseBody = response.Content.ReadAsStringAsync().Result;
                     var _customer = JsonConvert.DeserializeObject<CustomerDetailResponse>(responseBody);
 
-                     result = await _invoiceService.AddInvoiceWebhook(invoiceRequest,_customer.Data);
+                     result = await _invoiceService.AddInvoiceWebhook(invoiceRequest,invoiceResponse, _customer.Data);
                 }
 
                 if (!string.IsNullOrEmpty(result.InvoiceID))
                 {
                     //Get zuper invoice and update
-                    using (var http = new HttpClient())
-                    {
-                        http.DefaultRequestHeaders.Add("Accept", "application/json");
-                        http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
-                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}invoice/{invoiceRequest.invoice_uid}");
-                        HttpResponseMessage response = await http.SendAsync(request);
-                        var responseBody = response.Content.ReadAsStringAsync().Result;
-                        invoiceResponse = JsonConvert.DeserializeObject<InvoiceResponse>(responseBody);
+                    //using (var http = new HttpClient())
+                    //{
+                    //    http.DefaultRequestHeaders.Add("Accept", "application/json");
+                    //    http.DefaultRequestHeaders.Add("x-api-key", configuration["MetricApiKey"]);
+                    //    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{ZuperUrl}invoice/{invoiceRequest.invoice_uid}");
+                    //    HttpResponseMessage response = await http.SendAsync(request);
+                    //    var responseBody = response.Content.ReadAsStringAsync().Result;
+                    //    invoiceResponse = JsonConvert.DeserializeObject<InvoiceResponse>(responseBody);
 
-                    }
+                    //}
                     var getCustomFields = invoiceResponse.data.custom_fields;
                     var updateInvoiceIdField = getCustomFields.Where(i => i.label == "Acomba Invoice ID").FirstOrDefault();
                     if (updateInvoiceIdField != null)

@@ -12,7 +12,7 @@ namespace acomba.zuper_api.AcombaServices
     public interface IinvoiceService
     {
         Task<string> AddInvoice(InvoiceRequest invoiceRequest);
-        Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest,CustomerDto _customer);
+        Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest,InvoiceResponse invoiceResponse,CustomerDto _customer);
         Task<object> GetInvoice(string invoiceId);
         Task<object> GetInvoices();
         Task<string> CustomerPayment(InvoicePayment _payment, CustomerDto _customer, string paymentMode);
@@ -37,7 +37,7 @@ namespace acomba.zuper_api.AcombaServices
 
         #region Add Invoice
 
-        public async Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest, CustomerDto _customer)
+        public async Task<ResultDto> AddInvoiceWebhook(InvoiceRequest invoiceRequest, InvoiceResponse invoiceResponse, CustomerDto _customer)
         {
             try
             {
@@ -54,8 +54,8 @@ namespace acomba.zuper_api.AcombaServices
                 int r = 1;
 
                 var _description = !invoiceRequest.invoice.custom_fields.Where(i => i.label == "Description").Any() ? null : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "Description").value;
-                var _po = invoiceRequest.invoice.custom_fields.Where(i => i.label == "PO").Any() ? null : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "PO").value;
-                var _terms = invoiceRequest.invoice.custom_fields.Where(i => i.label == "Terms").Any() ? null : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "Terms").value;
+                var _po = !invoiceRequest.invoice.custom_fields.Where(i => i.label == "PO").Any() ? null : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "PO").value;
+                var _terms = !invoiceRequest.invoice.custom_fields.Where(i => i.label == "Terms").Any() ? invoiceResponse.data.payment_term.payment_term_name : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "Terms").value;
                 var _invoiceId = invoiceRequest.invoice.custom_fields.Where(i => i.label == "Acomba Invoice ID").Any() ? null : invoiceRequest.invoice.custom_fields.FirstOrDefault(i => i.label == "Acomba Invoice ID").value;
                 var _tvq = !invoiceRequest.invoice.tax.Where(i => i.tax_name == "TVQ").Any() ? 0 : invoiceRequest.invoice.tax.Where(i => i.tax_name == "TVQ").FirstOrDefault().tax_amount.Value;
                 var _tps = !invoiceRequest.invoice.tax.Where(i => i.tax_name == "TPS").Any() ? 0 : invoiceRequest.invoice.tax.Where(i => i.tax_name == "TPS").FirstOrDefault().tax_amount.Value;
@@ -69,7 +69,7 @@ namespace acomba.zuper_api.AcombaServices
                     _transactionInt.InInvoiceNumber = _invoiceId;
                     _transactionInt.InInvoiceType = InvoicingType.ITp_Invoice;
                     _transactionInt.InReference = invoiceRequest.invoice.reference_no;
-                    _transactionInt.InDescription = _description;
+                    _transactionInt.InDescription = invoiceRequest.invoice.prefix;
                     _transactionInt.InCurrentDay = 1;
                     _transactionInt.InTransactionActive = 1;
                     _transactionInt.InInvoiceSubTotal = invoiceRequest.invoice.sub_total.Value;
@@ -77,7 +77,7 @@ namespace acomba.zuper_api.AcombaServices
                    
                     
                     _transactionInt.InInvoiceTotal = invoiceRequest.invoice.total == null ? invoiceRequest.invoice.sub_total.Value : invoiceRequest.invoice.total.Value;
-                    customerNumber =_customer.custom_fields.Where(i => i.label.Contains("Project")).FirstOrDefault().value;
+                    customerNumber = _customer.customer_contact_no.home;
                   
                     //_transactionInt.InReceivableOffset = 1;
 
@@ -110,7 +110,7 @@ namespace acomba.zuper_api.AcombaServices
                                 if (error == 0)
                                 {
                                     _transactionInt.ILDescription[_transactionInt.TANumLines] = productInt.PrDescription[1];
-                                    _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = productInt.PrSellingPrice[0, 1];
+                                    _transactionInt.ILSellingPrice[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].unit_price == null? productInt.PrSellingPrice[0, 1] : invoiceRequest.invoice.line_items[i].unit_price.Value;
                                    _transactionInt.ILInvoicedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
                                     _transactionInt.ILOrderedQty[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].quantity.Value;
                                     _transactionInt.ILTotalAmount[_transactionInt.TANumLines] = invoiceRequest.invoice.line_items[i].total;
